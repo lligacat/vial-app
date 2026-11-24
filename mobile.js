@@ -27,16 +27,17 @@ function renderAppLogin() {
 // ---------- estructura ----------
 function renderApp() {
   const m = ui.m, role = S.role === 'prof' ? 'prof' : 'alu', prevEl = mq('.m-body'), sc = prevEl ? prevEl.scrollTop : 0;
-  const tabs = role === 'alu' ? [['home', 'Inici', 'home'], ['classes', 'Classes', 'cal'], ['guide', 'Guia', 'award'], ['inbox', 'Avisos', 'bell'], ['more', 'Més', 'menu']] : [['today', 'Avui', 'home'], ['students', 'Alumnes', 'users'], ['exam', 'Examen', 'flag'], ['res', 'Recursos', 'video'], ['inbox', 'Avisos', 'bell']];
-  if (!m.tab || !tabs.some(t => t[0] === m.tab)) m.tab = tabs[0][0];
+  const tabs = role === 'alu' ? [['home', 'Inici', 'home'], ['classes', 'Classes', 'cal'], ['guide', 'Guia', 'award'], ['inbox', 'Avisos', 'bell'], ['more', 'Més', 'menu']] : [['today', 'Avui', 'home'], ['agenda', 'Agenda', 'cal'], ['students', 'Alumnes', 'users'], ['exam', 'Examen', 'flag'], ['res', 'Recursos', 'video']];
+  if (!m.tab || (!tabs.some(t => t[0] === m.tab) && m.tab !== 'inbox')) m.tab = tabs[0][0];
   checkShow();
   const k = recipKey(), unread = ntUnread(k);
   const body = m.sub ? subScreen(role) : role === 'alu' ? sTab(m.tab) : tTab(m.tab);
   const nav = m.sub ? '' : `<nav class="m-tabs">${tabs.map(t => `<button class="${m.tab === t[0] ? 'on' : ''}" data-m="tab" data-v="${t[0]}">${ic(t[2])}${t[0] === 'inbox' ? mBadge(unread) : ''}<span>${t[1]}</span></button>`).join('')}</nav>`;
-  $('#app').innerHTML = `<div class="mob ${role}"><div class="m-body">${body}</div>${nav}${sheetHtml(role)}</div>`;
+  $('#app').innerHTML = `<div class="mob ${role}"><div class="m-body ${m.anim ? 'm-anim' : ''}">${body}</div>${nav}${sheetHtml(role)}</div>`; m.anim = false;
   const nb = mq('.m-body'); if (nb) nb.scrollTop = sc;
   tickTimers(); ntCheck();
 }
+const hdrR = () => `<div class="m-hr"><button class="m-ib" data-m="tab" data-v="inbox">${ic('bell')}${mBadge(ntUnread(recipKey()))}</button>${avatarBtn()}</div>`;
 const avatarBtn = () => `<button class="m-avt" data-m="sub" data-v="profile" aria-label="Perfil">${ini(nameOf())}</button>`;
 function inboxHtml() {
   const k = recipKey(), list = ntOf(k).slice(0, 40), un = ntUnread(k);
@@ -62,6 +63,13 @@ function alertsHtml(me) {
   const te = theoryExpiry(me.id); if (te && daysLeft(te) <= 90 && !examOk(me.id, 'practic')) out.push([daysLeft(te) <= 30 ? 'bad' : 'warn', `El teòric caduca en ${daysLeft(te)} dies`, `Intents de pràctic: ${triesUsed(me.id)}/${S.cfg.tries}`, 'exams']);
   return out.slice(0, 3).map(a => `<button class="m-alert ${a[0]}" data-m="go" data-v="${a[3]}"><span>${ic('info')}</span><span><b>${esc(a[1])}</b><small>${esc(a[2])}</small></span>${ic('right')}</button>`).join('');
 }
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.__bip = e; try { if (isApp() && S.role === 'alumne') render(); } catch { } });
+function installCard() {
+  let off = false; try { off = sessionStorage.getItem('vial-noinst') === '1' || (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone; } catch { }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (off || !(window.__bip || ios)) return '';
+  return `<div class="m-card m-install"><span class="m-mi">${ic('plus')}</span><div><b>Instal·la l'app</b><small>Afegeix-la a la pantalla d'inici i rep els avisos.</small></div><button class="m-btn sm" data-m="install">Instal·lar</button><button class="m-x" data-m="install-x" aria-label="Tancar">${ic('x')}</button></div>`;
+}
 function sTab(t) {
   const me = stu(S.me), g = guide(me.id), nx = upcoming(me.id)[0], clk = classClock(me.id), P = PERM(me.p);
   if (t === 'inbox') return inboxHtml();
@@ -74,18 +82,18 @@ function sTab(t) {
     <button class="m-link" data-m="penal">Com funcionen els avisos d'absència i les penalitzacions</button>`;
   }
   if (t === 'guide') return guideHtml(me, g, P);
-  if (t === 'more') return `${mHead('Més', esc(me.n))}<div class="m-menu">${[['docs', 'Documents', 'doc', 'Puja\'ls i controla les caducitats'], ['pay', 'Pagaments i packs', 'card', 'Paga el carnet o compra pràctiques'], ['chat', 'Assistència', 'msg', 'Xat directe amb l\'autoescola'], ['tests', 'Tests', 'test', 'Practica el teòric'], ['videos', 'Teoria en vídeo', 'video', 'Classes al teu ritme'], ['timer', 'Temporitzador de classe', 'clock', 'Comptador d\'1 hora o el que triïs'], ['exams', 'Exàmens', 'flag', 'Convocatòries, intents i validesa'], ['prices', 'Preus i packs', 'chart', 'Tarifes del carnet ' + P.n]].map(x => `<button data-m="sub" data-v="${x[0]}"><span class="m-mi">${ic(x[2])}</span><span><b>${x[1]}</b><small>${x[3]}</small></span>${x[0] === 'docs' && docKeys(me.id).some(k => ['caducat', 'aviat', 'falta'].includes(docInfo(me.id, k).st)) ? '<i class="m-b">!</i>' : ''}${ic('right')}</button>`).join('')}</div>`;
+  if (t === 'more') return `${mHead('Més', esc(me.n))}<div class="m-menu">${[['docs', 'Documents', 'doc', 'Puja\'ls i controla les caducitats'], ['pay', 'Pagaments i packs', 'card', 'Paga el carnet o compra pràctiques'], ['chat', 'Assistència', 'msg', 'Xat directe amb l\'autoescola'], ['tests', 'Tests', 'test', 'Practica el teòric'], ['videos', 'Teoria en vídeo', 'video', 'Classes al teu ritme'], ['timer', 'Temporitzador de classe', 'clock', 'Comptador d\'1 hora o el que triïs'], ['exams', 'Exàmens', 'flag', 'Convocatòries, intents i validesa'], ['contract', 'Contracte de matrícula', 'doc', 'Llegeix-lo i signa\'l des del mòbil'], ['prices', 'Preus i packs', 'chart', 'Tarifes del carnet ' + P.n]].map(x => `<button data-m="sub" data-v="${x[0]}"><span class="m-mi">${ic(x[2])}</span><span><b>${x[1]}</b><small>${x[3]}</small></span>${x[0] === 'docs' && docKeys(me.id).some(k => ['caducat', 'aviat', 'falta'].includes(docInfo(me.id, k).st)) ? '<i class="m-b">!</i>' : ''}${ic('right')}</button>`).join('')}</div>`;
   // inici
   const bell = ntUnread(recipKey());
   const pend = S.pay.filter(x => x.s === me.id && x.st === 'pendent');
   return `${mHead(esc(me.n.split(' ')[0]), (new Date().getHours() < 13 ? 'Bon dia' : new Date().getHours() < 20 ? 'Bona tarda' : 'Bona nit') + ' · ' + esc(S.brand.wl ? S.brand.name : 'Vial'), `<div class="m-hr"><button class="m-ib" data-m="tab" data-v="inbox">${ic('bell')}${mBadge(bell)}</button>${avatarBtn()}</div>`)}
-  ${alertsHtml(me)}${clk ? timerCard(clk) : nextCard(me, nx)}
+  ${alertsHtml(me)}${installCard()}${clk ? timerCard(clk) : nextCard(me, nx)}
   <div class="m-card m-prog" data-m="tab" data-v="guide"><div class="m-ringw">${ring2(g.pct / 100, 96, 10, 'var(--accent)', '#e3e9f1')}<b>${g.pct}%</b></div><div><div class="m-lab">El teu camí al carnet ${P.n}</div><h2>${g.pct}% completat</h2><p class="m-sub">${g.ob[0] ? esc(g.ob[0].t) : 'Tot fet. Molta sort!'}</p></div></div>
   <div class="m-sec">Objectius per fer</div><div class="m-list">${g.ob.slice(0, 3).map(o => `<button class="m-ob" data-m="go" data-v="${o.go}"><span class="m-ck"></span><span><b>${esc(o.t)}</b><small>${esc(o.x)}</small></span>${ic('right')}</button>`).join('') || '<div class="m-empty">Cap objectiu pendent.</div>'}</div>
   <div class="m-grid">${[['book', 'Reservar', 'cal'], ['docs', 'Documents', 'doc'], ['pay', pend.length ? `Pagar (${pend.length})` : 'Pagaments', 'card'], ['chat', 'Xat', 'msg'], ['tests', 'Tests', 'test'], ['timer', 'Temporitzador', 'clock']].map(q => `<button class="m-qa" data-m="${q[0] === 'book' ? 'book' : 'go'}" data-v="${q[0]}">${ic(q[2])}<span>${q[1]}</span></button>`).join('')}</div>`;
 }
 function guideHtml(me, g, P) {
-  const sim = S.sim.filter(m => m.s === me.id).slice(-3).reverse(), tests = (S.tests[me.id] || []), passed = tests.filter(h => h.n >= h.of - 1).length;
+  const sim = S.sim.filter(m => m.s === me.id).slice(-3).reverse(), tests = (S.tests[me.id] || []), passed = tests.filter(h => h.ok != null ? h.ok : h.n >= h.of - 1).length;
   const sk = skillsFor(me.id).map(x => ({ n: x.n, l: lvl(me.id, x.k) })).sort((a, b) => a.l - b.l).slice(0, 5);
   return `${mHead('El meu camí', `Carnet ${P.n} · ${P.d}`)}
   <div class="m-card m-big"><div class="m-ringw">${ring2(g.pct / 100, 150, 14, 'var(--accent)', '#e3e9f1')}<b class="m-pct">${g.pct}%</b></div><div><div class="m-lab">Progrés total</div><h2>${g.pct >= 100 ? 'Carnet aconseguit' : g.pct >= 70 ? 'Ja gairebé hi ets' : g.pct >= 35 ? 'Vas pel bon camí' : 'Acabes de començar'}</h2><p class="m-sub">${g.ob.length} ${g.ob.length === 1 ? 'objectiu pendent' : 'objectius pendents'}</p></div></div>
@@ -122,14 +130,8 @@ function subScreen(role) {
     <div class="m-sec">Packs de pràctiques</div><div class="m-list">${bos.map(k => `<div class="m-pay"><span class="m-clt"><b>${k.n} pràctiques</b><small>${eur(k.pr / k.n)} / hora</small></span><b>${eur(k.pr)}</b><button class="m-btn sm" data-act="checkout" data-id="${k.id}">Comprar</button></div>`).join('')}</div>
     <div class="m-sec">Historial</div><div class="m-list">${mine.slice(0, 8).map(x => `<div class="m-pay"><span class="m-clt"><b>${esc(x.c)}</b><small>${fmtData(x.d)}</small></span><b>${eur(x.a)}</b>${pill(x.st)}</div>`).join('')}</div></div>`;
   }
-  if (s === 'tests') {
-    const q = ui.quiz, hist = S.tests[me.id] || [];
-    let main;
-    if (!q) main = `<div class="m-card"><h2>Test ràpid · ${PERM(me.p).n}</h2><p class="m-sub">${quizFor(me.id).length} preguntes. Aprova amb un màxim d'1 error.</p><button class="m-btn" data-act="quiz-start">Començar</button></div>`;
-    else if (q.fi) main = `<div class="m-card"><h2>${q.score >= q.qs.length - 1 ? 'Aprovat' : 'Suspès'} · ${q.score}/${q.qs.length}</h2>${q.qs.map((x, i) => `<div class="m-qr ${q.ans[i] === x.a ? 'ok' : 'no'}"><b>${esc(x.q)}</b>${q.ans[i] !== x.a ? `<small>Correcta: ${esc(x.o[x.a])}</small>` : ''}</div>`).join('')}<button class="m-btn" data-act="quiz-start">Tornar-ho a provar</button></div>`;
-    else { const x = q.qs[q.i]; main = `<div class="m-card"><div class="m-lab">Pregunta ${q.i + 1} de ${q.qs.length}</div><div class="m-bar"><i style="width:${q.i / q.qs.length * 100}%"></i></div><h2 style="margin:14px 0">${esc(x.q)}</h2>${x.o.map((o, i) => `<button class="m-opt" data-act="ans" data-i="${i}">${esc(o)}</button>`).join('')}</div>`; }
-    return `${mTopBack('Tests')}<div class="m-pad">${main}<div class="m-sec">Historial</div><div class="m-list">${[...hist].reverse().slice(0, 6).map(h => `<div class="m-pay"><span class="m-clt"><b>${fmtData(h.d)}</b></span><b>${h.n}/${h.of}</b><span class="pill ${h.n >= h.of - 1 ? 'ok' : 'bad'}">${h.n >= h.of - 1 ? 'Aprovat' : 'Suspès'}</span></div>`).join('') || '<div class="m-empty">Encara no has fet cap test.</div>'}</div></div>`;
-  }
+  if (s === 'tests') return `${mTopBack('Tests')}<div class="m-pad">${testsScreen(me)}</div>`;
+  if (s === 'contract') return contractScreen(me);
   if (s === 'videos') {
     const vids = videosFor(me.id), seen = S.seen[me.id] || [], v = vids.find(x => x.id === ui.vid) || vids[0], mods = [...new Set(vids.map(x => x.m))];
     return `${mTopBack('Teoria en vídeo')}<div class="m-pad"><div class="m-player" id="player">${playerHtml(v)}</div><h2>${esc(v.t)}</h2><p class="m-sub">${esc(v.m)} · ${v.d} min</p>${seen.includes(v.id) ? '<span class="pill ok">Vist</span>' : `<button class="m-btn" data-act="seen" data-id="${v.id}">Marcar com a vist</button>`}${mods.map(md => `<div class="m-sec">${esc(md)}</div><div class="m-list">${vids.filter(x => x.m === md).map(x => `<button class="m-cl" data-act="vid" data-id="${x.id}"><span class="m-cd ${seen.includes(x.id) ? 'done' : ''}">${seen.includes(x.id) ? ic('check') : ic('play')}</span><span class="m-clt"><b>${esc(x.t)}</b><small>${x.d} min</small></span></button>`).join('')}</div>`).join('')}</div>`;
@@ -158,19 +160,20 @@ function subScreen(role) {
 function tTab(t) {
   const iid = S.meI, td = iso(today0());
   if (t === 'inbox') return inboxHtml();
+  if (t === 'agenda') return tAgenda();
   if (t === 'students') {
     const list = myStudents(iid);
-    return `${mHead('Alumnes', `${list.length} alumnes`, avatarBtn())}<div class="m-list">${list.map(s => { const g = guide(s.id); const al = docKeys(s.id).some(k => ['caducat', 'falta', 'aviat'].includes(docInfo(s.id, k).st)); return `<button class="m-st" data-m="stu" data-id="${s.id}"><span class="m-av">${ini(s.n)}</span><span class="m-clt"><b>${esc(s.n)} ${pm(s.p)}</b><small>${doneN(s.id)} pràctiques · nota ${scoreAvg(s.id) ? scoreAvg(s.id).toFixed(1) : '—'}${readiness(s.id).ok ? ' · llest per a examen' : ''}${al ? ' · documents' : ''}</small><div class="m-bar sm"><i style="width:${g.pct}%"></i></div></span><em>${g.pct}%</em></button>`; }).join('')}</div>`;
+    return `${mHead('Alumnes', `${list.length} alumnes`, hdrR())}<div class="m-list">${list.map(s => { const g = guide(s.id); const al = docKeys(s.id).some(k => ['caducat', 'falta', 'aviat'].includes(docInfo(s.id, k).st)); return `<button class="m-st" data-m="stu" data-id="${s.id}"><span class="m-av">${ini(s.n)}</span><span class="m-clt"><b>${esc(s.n)} ${pm(s.p)}</b><small>${doneN(s.id)} pràctiques · nota ${scoreAvg(s.id) ? scoreAvg(s.id).toFixed(1) : '—'}${readiness(s.id).ok ? ' · llest per a examen' : ''}${al ? ' · documents' : ''}</small><div class="m-bar sm"><i style="width:${g.pct}%"></i></div></span><em>${g.pct}%</em></button>`; }).join('')}</div>`;
   }
   if (t === 'exam') {
     const run = S.simRun[iid];
     if (run) return simRunHtml(run);
     const sims = S.sim.filter(m => m.i === iid).slice(-5).reverse();
-    return `${mHead('Mode examen', 'Simulacre amb faltes', avatarBtn())}<div class="m-card m-tip"><b>Com funciona</b><p>Tria un alumne, comença el cronòmetre i anota cada falta (lleu, deficient o eliminatòria) mentre condueix. En acabar, l'alumne rep el resultat al mòbil.</p></div><div class="m-sec">Tria l'alumne</div><div class="m-list">${myStudents(iid).map(s => `<button class="m-st" data-m="sim-start" data-id="${s.id}"><span class="m-av">${ini(s.n)}</span><span class="m-clt"><b>${esc(s.n)} ${pm(s.p)}</b><small>${S.sim.filter(m => m.s === s.id).length} simulacres fets</small></span>${ic('play')}</button>`).join('')}</div><div class="m-sec">Últims simulacres</div><div class="m-list">${sims.map(m => `<div class="m-sm ${m.ok ? 'ok' : 'no'}"><b>${esc(stu(m.s).n)} · ${m.ok ? 'dins dels criteris' : 'cal millorar'}</b><small>${m.t.E} elim. · ${m.t.D} defic. · ${m.t.L} lleus · ${m.dur} min</small></div>`).join('') || '<div class="m-empty">Encara no n\'has fet cap.</div>'}</div>`;
+    return `${mHead('Mode examen', 'Simulacre amb faltes', hdrR())}<div class="m-card m-tip"><b>Com funciona</b><p>Tria un alumne, comença el cronòmetre i anota cada falta (lleu, deficient o eliminatòria) mentre condueix. En acabar, l'alumne rep el resultat al mòbil.</p></div><div class="m-sec">Tria l'alumne</div><div class="m-list">${myStudents(iid).map(s => `<button class="m-st" data-m="sim-start" data-id="${s.id}"><span class="m-av">${ini(s.n)}</span><span class="m-clt"><b>${esc(s.n)} ${pm(s.p)}</b><small>${S.sim.filter(m => m.s === s.id).length} simulacres fets</small></span>${ic('play')}</button>`).join('')}</div><div class="m-sec">Últims simulacres</div><div class="m-list">${sims.map(m => `<div class="m-sm ${m.ok ? 'ok' : 'no'}"><b>${esc(stu(m.s).n)} · ${m.ok ? 'dins dels criteris' : 'cal millorar'}</b><small>${m.t.E} elim. · ${m.t.D} defic. · ${m.t.L} lleus · ${m.dur} min</small></div>`).join('') || '<div class="m-empty">Encara no n\'has fet cap.</div>'}</div>`;
   }
   if (t === 'res') {
     const rs = ui.m.rs;
-    return `${mHead('Recursos', 'Per explicar en temps real', avatarBtn())}<div class="m-seg"><button class="${rs === 'ex' ? 'on' : ''}" data-m="rs" data-v="ex">Animacions</button><button class="${rs === 'vid' ? 'on' : ''}" data-m="rs" data-v="vid">Vídeos</button></div>
+    return `${mHead('Recursos', 'Per explicar en temps real', hdrR())}<div class="m-seg"><button class="${rs === 'ex' ? 'on' : ''}" data-m="rs" data-v="ex">Animacions</button><button class="${rs === 'vid' ? 'on' : ''}" data-m="rs" data-v="vid">Vídeos</button></div>
     ${rs === 'ex' ? `<div class="m-list">${EXPL.map(e => `<div class="m-rs"><div class="m-svg">${e.svg()}</div><div class="m-rst"><b>${e.t}</b><small>${e.sub}</small><div class="m-row2"><button class="m-btn sm o" data-m="expl" data-id="${e.id}">Obrir</button><button class="m-btn sm" data-m="show" data-k="ex" data-id="${e.id}">Mostrar a l'alumne</button></div></div></div>`).join('')}</div>` : `<div class="m-list">${S.vid.slice(0, 16).map(v => `<div class="m-rs v"><div class="m-rst"><b>${esc(v.t)}</b><small>${esc(v.m)} · ${v.d} min</small><div class="m-row2"><button class="m-btn sm o" data-m="vidp" data-id="${v.id}">Veure</button><button class="m-btn sm" data-m="show" data-k="vid" data-id="${v.id}">Mostrar a l'alumne</button></div></div></div>`).join('')}</div>`}`;
   }
   // avui
@@ -210,7 +213,7 @@ function sheetHtml(role) {
     <div class="m-row2"><button class="m-btn o" data-m="sheet-x">Tancar</button><button class="m-btn" data-act="picks-ok" ${pk ? '' : 'disabled'}>Reservar ${pk || ''}</button></div>`;
   } else if (sh.k === 'upl') {
     const k = sh.id, nm = TRD[k].l.replace(/ \(.*\)/, ''); title = nm;
-    c = `<p class="m-sub">${TRD[k].h}</p><div class="m-field"><label>Fitxer o foto</label><input id="m-file" type="file" accept="image/*,application/pdf" capture="environment"></div>
+    c = `<p class="m-sub">${TRD[k].h}</p><label class="m-file"><input id="m-file" type="file" accept="image/*,application/pdf" hidden>${ic('up')}<span id="m-fn">Fer una foto o triar un fitxer</span></label>
     <div class="m-field"><label>${k === 'metge' ? `Data d'emissió (caduca als ${S.cfg.medDays} dies)` : 'Data de caducitat (opcional)'}</label><input id="m-date" type="date"></div><div class="m-row2"><button class="m-btn o" data-m="sheet-x">Cancel·lar</button><button class="m-btn" data-m="doc-send" data-k="${k}">Enviar al centre</button></div>`;
   } else if (sh.k === 'expl' || sh.k === 'show') {
     let e = null, v = null, by = '';
@@ -232,6 +235,7 @@ function sheetHtml(role) {
   } else if (sh.k === 'nudge') { title = 'Enviar avís'; c = `<div class="m-field"><label>Missatge per a ${esc(stu(sh.id).n)}</label><textarea id="m-nudge" rows="3" placeholder="Ex. No oblidis portar el DNI"></textarea></div><div class="m-row2"><button class="m-btn o" data-m="sheet-x">Cancel·lar</button><button class="m-btn" data-m="nudge-go" data-id="${sh.id}">Enviar</button></div>`; }
   else if (sh.k === 'simres') { const m = S.sim[S.sim.length - 1]; title = 'Resultat del simulacre'; c = `<div class="m-card ${m.ok ? 'm-ok' : 'm-bad'}"><h2>${m.ok ? 'Dins dels criteris' : 'Cal millorar'}</h2><p>${esc(m.why)}</p></div><div class="m-tot"><div><b>${m.t.E}</b><small>Elim.</small></div><div><b>${m.t.D}</b><small>Defic.</small></div><div><b>${m.t.L}</b><small>Lleus</small></div></div><p class="m-sub">L'alumne ja ho té al mòbil.</p><button class="m-btn" data-m="sheet-x">Tancar</button>`; }
   else if (sh.k === 'simend') { const r = S.simRun[S.meI], t = simTot(r.f), v = simVerdict(t); title = 'Finalitzar simulacre'; c = `<div class="m-tot"><div><b>${t.E}</b><small>Elim.</small></div><div><b>${t.D}</b><small>Defic.</small></div><div><b>${t.L}</b><small>Lleus</small></div></div><div class="m-verd ${v.ok ? 'ok' : 'no'}">${v.ok ? 'Dins dels criteris' : esc(v.why)}</div><div class="m-row2"><button class="m-btn o" data-m="sheet-x">Continuar</button><button class="m-btn" data-m="sim-save">Desar i avisar l'alumne</button></div>`; }
+  else if (sh.k === 'ios') { title = 'Instal·lar l\'app'; c = `<ol class="m-ol"><li>Toca el botó de compartir del navegador.</li><li>Tria «Afegeix a la pantalla d'inici».</li><li>Obre l'app des de la icona nova.</li></ol><button class="m-btn" data-m="sheet-x">Entès</button>`; }
   else if (sh.k === 'penal') { title = 'Avisos d\'absència'; c = `<p class="m-sub">Si no pots venir a una classe, avisa des de «Detalls i punt» o «No puc assistir». L'hora queda lliure per a altres alumnes i la pràctica torna al teu bo. L'autoescola decideix si aplica una penalització, segons aquesta política:</p><div class="m-list">${policyRows().map(r => `<div class="m-pay"><span class="m-clt"><b>${r.lab}</b></span><b>${r.cost}</b></div>`).join('')}</div><button class="m-btn" data-m="sheet-x">Entès</button>`; }
   return `<div class="m-ov" data-m="sheet-x"><div class="m-sheet" data-m-stop="1"><div class="m-grab"></div><div class="m-sh-t"><b>${esc(title)}</b><button data-m="sheet-x" aria-label="Tancar">${ic('x')}</button></div><div class="m-sh-b">${c}</div></div></div>`;
 }
@@ -242,14 +246,14 @@ function checkShow() {
 
 // ---------- accions ----------
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-m]'); if (!el) return; const D = el.dataset, a = D.m, m = ui.m;
+  const el = e.target.closest('[data-m]'); if (!el) return; const D = el.dataset, a = D.m, m = ui.m; try { if (navigator.vibrate && a !== 'sheet-x') navigator.vibrate(6); } catch { }
   if (a === 'sheet-x') { if (e.target.closest('[data-m-stop]') && !e.target.closest('[data-m=sheet-x]')) return; m.sheet = null; return render(); }
   if (el.classList.contains('m-ov') && e.target.closest('[data-m-stop]')) return;
   const me = S.role === 'alumne' ? stu(S.me) : null;
   switch (a) {
-    case 'tab': m.tab = D.v; m.sub = null; render(); break;
-    case 'sub': m.sub = D.v; render(); break;
-    case 'back': m.sub = null; render(); break;
+    case 'tab': m.tab = D.v; m.sub = null; m.anim = true; render(); break;
+    case 'sub': m.sub = D.v; m.anim = true; render(); break;
+    case 'back': m.sub = null; m.anim = true; render(); break;
     case 'go': if (D.v === 'book') { m.sheet = { k: 'book' }; render(); } else mNavTo(D.v === 'pay' ? 'pay' : D.v), render(); break;
     case 'book': m.sheet = { k: 'book' }; render(); break;
     case 'bday': m.bd = D.v; render(); break;
@@ -283,6 +287,8 @@ document.addEventListener('click', e => {
     case 'tm-start': { let t = {}; try { t = JSON.parse(sessionStorage.getItem('vial-timer') || '{}'); } catch { } t.dur = t.dur || 3600; if (t.paused) { t.start = Date.now() - (t.dur - t.left) * 1000; t.paused = false; } else t.start = Date.now(); sessionStorage.setItem('vial-timer', JSON.stringify(t)); render(); break; }
     case 'tm-pause': { let t = {}; try { t = JSON.parse(sessionStorage.getItem('vial-timer') || '{}'); } catch { } t.left = Math.round(t.dur - (Date.now() - t.start) / 1000); t.paused = true; sessionStorage.setItem('vial-timer', JSON.stringify(t)); render(); break; }
     case 'tm-reset': { let t = {}; try { t = JSON.parse(sessionStorage.getItem('vial-timer') || '{}'); } catch { } sessionStorage.setItem('vial-timer', JSON.stringify({ dur: t.dur || 3600 })); render(); break; }
+    case 'install': if (window.__bip) { window.__bip.prompt(); window.__bip = null; } else m.sheet = { k: 'ios' }; render(); break;
+    case 'install-x': try { sessionStorage.setItem('vial-noinst', '1'); } catch { } render(); break;
     case 'fake': el.disabled = true; toast('Vídeo de mostra'); break;
   }
 });
@@ -290,3 +296,5 @@ document.addEventListener('click', e => {
 document.addEventListener('click', e => { const el = e.target.closest('[data-act="picks-ok"]'); if (el && ui.m.sheet && ui.m.sheet.k === 'book') { ui.m.sheet = null; setTimeout(render, 0); } }, true);
 document.addEventListener('input', e => { if (e.target.dataset.mIn === 'simnote' && S.simRun[S.meI]) { S.simRun[S.meI].note = e.target.value; save(); } });
 window.boot = () => { render(); };
+
+document.addEventListener('change', e => { if (e.target.id === 'm-file') { const f = e.target.files[0], n = mq('#m-fn'); if (n) n.textContent = f ? f.name : 'Fer una foto o triar un fitxer'; } });

@@ -122,7 +122,7 @@ const DOC_PILL = { falta: ['mute', 'Falta'], revisio: ['warn', 'En revisió'], o
 function guide(sid) {
   const s = stu(sid), P = PERM(s.p), docs = docKeys(sid), dOk = docs.filter(k => ['ok', 'aviat'].includes(docInfo(sid, k).st)).length;
   const pays = S.pay.filter(x => x.s === sid), paid = pays.filter(x => x.st === 'pagat').length, pend = pays.filter(x => x.st === 'pendent').length;
-  const tests = S.tests[sid] || [], passed = tests.filter(h => h.n >= h.of - 1).length, tOk = theoryDone(sid), circ = P.ex.includes('circuit'), cOk = examOk(sid, 'circuit'), pOk = examOk(sid, 'practic');
+  const tests = S.tests[sid] || [], passed = tests.filter(h => h.ok != null ? h.ok : h.n >= h.of - 1).length, tOk = theoryDone(sid), circ = P.ex.includes('circuit'), cOk = examOk(sid, 'circuit'), pOk = examOk(sid, 'practic');
   const done = doneN(sid), avg = scoreAvg(sid, 3), nx = nextExam(sid);
   const steps = [
     { k: 'mat', l: 'Matrícula i pagament', w: 10, p: pays.length ? paid / Math.max(1, paid + pend) : 0 },
@@ -198,6 +198,7 @@ function tickTimers() {
   document.querySelectorAll('[data-timer]').forEach(el => {
     const kind = el.dataset.timer; let left, tot;
     if (kind === 'class') { const c = classClock(+el.dataset.sid); if (!c) return; left = c.left; tot = c.tot; }
+    else if (kind === 'tq') { const l = typeof tqLeft === 'function' ? tqLeft() : null; if (l == null) return; left = l; tot = 1800; }
     else if (kind === 'sim') { const r = S.simRun[S.meI]; if (!r) return; tot = S.cfg.simMin * 60; left = Math.round(tot - (Date.now() - r.ts) / 1000); }
     else { let m = {}; try { m = JSON.parse(sessionStorage.getItem('vial-timer') || '{}'); } catch { } if (!m.start) { left = (m.dur || 3600); tot = m.dur || 3600; } else { left = m.paused ? m.left : Math.round(m.dur - (Date.now() - m.start) / 1000); tot = m.dur; } }
     const txt = el.querySelector('.tm-t'), arc = el.querySelector('.tm-a'); if (txt) { txt.textContent = (left < 0 ? '+' : '') + fmtMS(Math.abs(left)); el.classList.toggle('late', left <= 300); }

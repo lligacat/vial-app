@@ -347,7 +347,7 @@ function seed() {
 const KEY = window.APP_KEY || 'ruta-autoescola-v5';
 let S = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { return seed(); } })();
 try { const tb = JSON.parse(sessionStorage.getItem('vial-tab') || 'null'); if (tb) Object.assign(S, tb); } catch { }
-const save = () => { try { sessionStorage.setItem('vial-tab', JSON.stringify({ role: S.role, me: S.me, meI: S.meI })); } catch { } localStorage.setItem(KEY, JSON.stringify(S)); };
+const save = () => { try { sessionStorage.setItem('vial-tab', JSON.stringify({ role: S.role, me: S.me, meI: S.meI })); } catch { } localStorage.setItem(KEY, JSON.stringify(S)); if (window.onSave) window.onSave(); };
 
 // ---------- marca: Vial (producte) + marca blanca de cada autoescola ----------
 S.brand = S.brand || { name: 'Autoescola Bages', c: '#3e6ae1' }; if (S.brand.c === '#1d3b6e') S.brand.c = '#3e6ae1';
@@ -374,7 +374,7 @@ function applyBrand() {
 applyBrand();
 const stu = id => S.stu.find(x => x.id === id);
 const ins = id => S.instr.find(x => x.id === id);
-const nid = () => ++S.nextId;
+const nid = () => window.NID ? window.NID() : ++S.nextId;
 migrate4();
 const isAdmin = () => S.role === 'admin', isProf = () => S.role === 'prof';
 function download(name, mime, content) {
@@ -546,7 +546,7 @@ const VIEWS = () => ({
   admin: { resum: vResum, embuts: vEmbuts, agenda: vAgenda, disponibilitat: vDisp, preinscripcions: vPre, alumnes: vAlumnes, profs: vProfs, vehicles: vVeh, examens: vExamsStaff, tramits: vTramitsAdmin, absencies: vAbs, pagaments: vPagAdmin, liquidacio: vLiq, assistencia: vAssist, documents: vDocs, automatitzacions: vAuto, videos: vVideosAdmin, config: vConfig },
 })[S.role];
 
-const LOGGED = () => { try { return sessionStorage.getItem('vial-in') === '1' || (!!window.APP_MODE && localStorage.getItem('vial-in') === '1'); } catch { return true; } };
+const LOGGED = () => { try { return sessionStorage.getItem('vial-in') === '1' || (!!window.APP_MODE && localStorage.getItem('vial-in') === '1') || (!!window.SYNC && !!localStorage.getItem('vial-token')); } catch { return true; } };
 function renderLogin() {
   const P = [['alumne', 'Alumne', 'Laia Roca', 'Reserves, temari, pagaments i exàmens'], ['prof', 'Professor', 'Jordi Puig', 'Agenda, registre de classes i alumnes'], ['admin', 'Autoescola', 'Anna Bosch', 'Gestió completa del centre']];
   $('#app').innerHTML = `<div class="login">
@@ -1687,7 +1687,7 @@ document.addEventListener('click', e => {
     case 'reset': if (confirm('Restablir totes les dades de mostra?')) { localStorage.removeItem(KEY); location.reload(); } break;
     case 'go': closeModal(); ui.page = D.p; if (D.p === 'classes') ui.fake = 0; render(); window.scrollTo(0, 0); break;
     case 'login': try { sessionStorage.setItem('vial-in', '1'); if (window.APP_MODE) localStorage.setItem('vial-in', '1'); } catch {} S.role = D.r; ui.page = null; ui.instr = D.r === 'alumne' ? 'all' : D.r === 'prof' ? S.meI : S.instr[0].id; save(); render(); window.scrollTo(0, 0); break;
-    case 'logout': try { sessionStorage.removeItem('vial-in'); localStorage.removeItem('vial-in'); } catch {} closeModal(); render(); window.scrollTo(0, 0); break;
+    case 'logout': if (window.onLogout) onLogout(); try { sessionStorage.removeItem('vial-in'); localStorage.removeItem('vial-in'); } catch {} closeModal(); render(); window.scrollTo(0, 0); break;
     case 'role': S.role = D.r; ui.page = null; ui.instr = D.r === 'alumne' ? 'all' : D.r === 'prof' ? S.meI : S.instr[0].id; ui.thread = null; save(); render(); break;
     case 'enr': S.me = D.id; ui.instr = 'all'; ui.quiz = null; ui.vid = null; ui.picks = []; if (D.go) ui.page = D.go; save(); render(); break;
     case 'week': ui.weekOff = +D.n === 0 ? 0 : ui.weekOff + +D.n; render(); break;

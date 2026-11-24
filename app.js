@@ -386,7 +386,7 @@ const ui = { page: null, weekOff: 0, instr: 'all', vid: 'v5', fake: 0, timer: nu
 const NAV = {
   alumne: [['inici', 'Inici', 'home'], ['practiques', 'Pràctiques', 'cal'], ['temari', 'Temari', 'book'], ['classes', 'Vídeos', 'video'], ['tests', 'Tests', 'test'], ['examens', 'Exàmens', 'flag'], ['tramits', 'Tràmits', 'doc'], ['pagaments', 'Pagaments', 'card'], ['tarifes', 'Preus i packs', 'chart'], ['carnets', 'Més carnets', 'plus'], ['assistencia', 'Assistència', 'msg']],
   prof: [['avui', 'Avui', 'home'], ['agenda', 'Agenda', 'cal'], ['alumnes', 'Alumnes', 'users'], ['examens', 'Exàmens', 'flag'], ['assistencia', 'Assistència', 'msg']],
-  admin: [['resum', 'Resum', 'chart'], ['embuts', 'Fases i embuts', 'chart'], ['agenda', 'Agenda', 'cal'], ['disponibilitat', 'Disponibilitat', 'clock'], ['preinscripcions', 'Preinscripcions', 'plus'], ['alumnes', 'Alumnes', 'users'], ['profs', 'Professors', 'award'], ['vehicles', 'Vehicles', 'car'], ['examens', 'Exàmens', 'flag'], ['tramits', 'Tràmits', 'doc'], ['documents', 'Documents', 'doc'], ['absencies', 'Avisos d\'absència', 'info'], ['pagaments', 'Pagaments', 'card'], ['liquidacio', 'Liquidació', 'chart'], ['assistencia', 'Assistència', 'msg'], ['automatitzacions', 'Automatitzacions', 'clock'], ['videos', 'Vídeos', 'video'], ['config', 'Configuració', 'cog']],
+  admin: [['resum', 'Resum', 'chart'], ['estadistiques', 'Estadístiques', 'chart'], ['embuts', 'Fases i embuts', 'chart'], ['agenda', 'Agenda', 'cal'], ['disponibilitat', 'Disponibilitat', 'clock'], ['preinscripcions', 'Preinscripcions', 'plus'], ['alumnes', 'Alumnes', 'users'], ['profs', 'Professors', 'award'], ['vehicles', 'Vehicles', 'car'], ['examens', 'Exàmens', 'flag'], ['tramits', 'Tràmits', 'doc'], ['documents', 'Documents', 'doc'], ['absencies', 'Avisos d\'absència', 'info'], ['pagaments', 'Pagaments', 'card'], ['liquidacio', 'Liquidació', 'chart'], ['assistencia', 'Assistència', 'msg'], ['automatitzacions', 'Automatitzacions', 'clock'], ['videos', 'Vídeos', 'video'], ['config', 'Configuració', 'cog']],
 };
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('show'), 2800); }
 function modal(html, wide) {
@@ -543,7 +543,7 @@ const head = (t, s, extra = '') => `<div class="page-h row between wrap"><div><h
 const VIEWS = () => ({
   alumne: { inici: vInici, practiques: vPractiques, temari: vTemari, classes: vClasses, tests: vTests, examens: vExams, tramits: vTramits, pagaments: vPagaments, tarifes: vTarifes, carnets: vCarnets, assistencia: vAssist },
   prof: { avui: vAvui, agenda: vAgenda, alumnes: vAlumnes, examens: vExamsStaff, assistencia: vAssist },
-  admin: { resum: vResum, embuts: vEmbuts, agenda: vAgenda, disponibilitat: vDisp, preinscripcions: vPre, alumnes: vAlumnes, profs: vProfs, vehicles: vVeh, examens: vExamsStaff, tramits: vTramitsAdmin, absencies: vAbs, pagaments: vPagAdmin, liquidacio: vLiq, assistencia: vAssist, documents: vDocs, automatitzacions: vAuto, videos: vVideosAdmin, config: vConfig },
+  admin: { resum: vResum, estadistiques: () => vStats(), embuts: vEmbuts, agenda: vAgenda, disponibilitat: vDisp, preinscripcions: vPre, alumnes: vAlumnes, profs: vProfs, vehicles: vVeh, examens: vExamsStaff, tramits: vTramitsAdmin, absencies: vAbs, pagaments: vPagAdmin, liquidacio: vLiq, assistencia: vAssist, documents: vDocs, automatitzacions: vAuto, videos: vVideosAdmin, config: vConfig },
 })[S.role];
 
 const LOGGED = () => { try { return sessionStorage.getItem('vial-in') === '1' || (!!window.APP_MODE && localStorage.getItem('vial-in') === '1') || (!!window.SYNC && !!localStorage.getItem('vial-token')); } catch { return true; } };
@@ -582,7 +582,7 @@ function render() {
   const GROUP = {
     alumne: { inici: 'Resum', practiques: 'Formació', examens: 'Tràmits', pagaments: 'Compte', assistencia: 'Ajuda' },
     prof: { avui: 'Activitat', alumnes: 'Gestió', assistencia: 'Ajuda' },
-    admin: { resum: 'General', embuts: 'Anàlisi', agenda: 'Planificació', preinscripcions: 'Gestió', pagaments: 'Economia', assistencia: 'Atenció', automatitzacions: 'Automatització', videos: 'Contingut', config: 'Sistema' },
+    admin: { resum: 'General', estadistiques: 'Anàlisi', agenda: 'Planificació', preinscripcions: 'Gestió', pagaments: 'Economia', assistencia: 'Atenció', automatitzacions: 'Automatització', videos: 'Contingut', config: 'Sistema' },
   }[S.role];
   const cur = nav.find(n => n[0] === ui.page);
   $('#app').innerHTML = `
@@ -769,7 +769,7 @@ function vPagaments() {
   const carnet = S.packs.find(k => k.t === 'carnet' && k.p === me.p && k.on), bos = S.packs.filter(k => k.t === 'bo' && k.p === me.p && k.on);
   const due = mine.filter(x => x.st === 'pendent');
   return `${head('Pagaments', `Carnet ${P.n} · ${P.d}. Pagament del carnet complet, packs de pràctiques i historial.`)}
-  ${carnet ? `<div class="hero-pay"><div><span class="pill info">Opció amb descompte</span><h2 style="margin:10px 0 6px">${packTitle(carnet)}</h2><p style="max-width:52ch">Inclou tot el necessari fins a l'examen pràctic. Es pot abonar en un sol pagament o fraccionat en 3 o 6 quotes sense interessos.</p>
+  ${carnet ? `<div class="hero-pay"><div><span class="pill info">Opció amb descompte</span><h2 style="margin:10px 0 6px">${packTitle(carnet)}</h2><p style="max-width:52ch">Inclou tot el necessari fins a l'examen pràctic. ${finText()}</p>
   <ul class="inc">${['Matrícula i material', 'Teoria online il·limitada i tests', `${carnet.n} pràctiques de conducció`, 'Taxa DGT d\'examen', '1 convocatòria d\'examen pràctic'].map(x => `<li>${ic('check')}${x}</li>`).join('')}</ul></div>
   <div class="hp-r"><div class="old">${eur(carnet.ref)}</div><div class="new">${eur(carnet.pr)}</div><div class="sm" style="margin-bottom:14px">Estalvi de ${eur(carnet.ref - carnet.pr)} · o ${eur(carnet.pr / 3)} al mes en 3 quotes</div><button class="btn" style="width:100%;justify-content:center" data-act="checkout" data-id="${carnet.id}">Pagar el carnet</button></div></div>` : ''}
   ${due.length ? `<div class="card" style="margin-bottom:16px"><div class="card-h"><h2>Pendent de pagar</h2><b>${eur(due.reduce((a, x) => a + x.a, 0))}</b></div>${due.map(x => `<div class="item"><div class="grow"><b>${esc(x.c)}</b><div class="sm muted">${eur(x.a)} · ${x.d > iso(today0()) ? 'venç el ' + fmtData(x.d) : 'emès el ' + fmtData(x.d)}</div></div><button class="btn sm pri" data-act="pay" data-id="${x.id}">Pagar</button></div>`).join('')}</div>` : ''}
@@ -789,25 +789,26 @@ function coCalc() {
   return { k, c, ref, disc, credit, total };
 }
 function checkoutModal() {
-  const { k, c, disc, credit, total } = coCalc(), q = ui.co.quotes;
+  const { k, c, disc, credit, total: total0 } = coCalc(), q = ui.co.quotes, fee = k.t === 'carnet' ? finFee(q) : 0, total = +(total0 * (1 + fee / 100)).toFixed(2);
   modal(`<h2>${ui.co.newP ? 'Matrícula · ' : ''}${packTitle(k)}</h2>
   <div class="item" style="padding-top:0"><div class="grow">${k.t === 'carnet' ? 'Carnet complet' : k.n + ' pràctiques'}</div><b>${eur(k.pr)}</b></div>
   ${c ? `<div class="item"><div class="grow">${c.ref ? 'Codi d\'un amic' : 'Codi'} ${esc(c.c)}</div><b style="color:var(--ok)">−${eur(disc)}</b></div>` : ''}
   ${credit ? `<div class="item"><div class="grow">Crèdit per amics apuntats</div><b style="color:var(--ok)">−${eur(credit)}</b></div>` : ''}
+  ${fee ? `<div class="item"><div class="grow">Recàrrec de finançament (${fee} %)</div><b>+${eur(total - total0)}</b></div>` : ''}
   <div class="item"><div class="grow"><b>Total</b></div><b style="font-size:20px">${eur(total)}</b></div>
   <div class="row" style="margin:14px 0 4px;align-items:flex-end"><div class="grow"><label for="cc">Codi de descompte</label><input id="cc" value="${esc(ui.co.coupon || '')}" placeholder="BENVINGUT10" style="text-transform:uppercase"></div><button class="btn" data-act="coupon">Aplicar</button></div>
   ${ui.co.coupon && !c ? '<div class="sm" style="color:var(--bad)">El codi no és vàlid.</div>' : ''}
-  ${k.t === 'carnet' ? `<div class="field" style="margin-top:12px"><label for="cq">Forma de pagament</label><select id="cq" data-act="quotes">${[[1, 'Pagament únic'], [3, '3 quotes sense interessos'], [6, '6 quotes sense interessos']].map(o => `<option value="${o[0]}" ${q == o[0] ? 'selected' : ''}>${o[1]}${o[0] > 1 ? ' · ' + eur(total / o[0]) + '/mes' : ''}</option>`).join('')}</select></div>` : ''}
-  <div class="field" style="margin-top:12px"><label for="cm">Mètode</label><select id="cm" data-act="method">${['Targeta', 'Bizum', 'Apple Pay / Google Pay'].map(m => `<option ${ui.co.method === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
-  <div class="notice" style="margin-top:12px">${ic('info')}<div>Pagament simulat. En producció es connectaria amb Stripe o Redsys i es desarien les dades de pagament de forma segura.</div></div>
+  ${k.t === 'carnet' ? `<div class="field" style="margin-top:12px"><label for="cq">Forma de pagament</label><select id="cq" data-act="quotes">${finPlans().map(o => { const tt = total0 * (1 + o.fee / 100); return `<option value="${o.n}" ${q == o.n ? 'selected' : ''}>${o.n === 1 ? 'Pagament únic' : o.n + ' quotes' + (o.fee ? '' : ' sense interessos')}${o.n > 1 ? ' · ' + eur(tt / o.n) + '/mes' + (o.fee ? ' (+' + o.fee + ' %)' : '') : ''}</option>`; }).join('')}</select></div>` : ''}
+  ${payLive() ? '' : `<div class="field" style="margin-top:12px"><label for="cm">Mètode</label><select id="cm" data-act="method">${['Targeta', 'Bizum', 'Apple Pay / Google Pay'].map(m => `<option ${ui.co.method === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>`}
+  ${payNote()}
   <div class="acts"><button class="btn" data-act="close">Cancel·lar</button><button class="btn pri" data-act="co-ok">Pagar ${eur(q > 1 ? total / q : total)}</button></div>`);
 }
 function payModal(x) {
-  modal(`<h2>Pagar ${eur(x.a)}</h2><p class="muted" style="margin-bottom:14px">${esc(x.c)}</p><div class="notice">${ic('info')}<div>Pagament simulat. En producció es connectaria amb una passarel·la com Stripe o Redsys.</div></div><div class="field"><label for="pm">Mètode</label><select id="pm"><option>Targeta</option><option>Bizum</option><option>Apple Pay / Google Pay</option></select></div><div class="acts"><button class="btn" data-act="close">Cancel·lar</button><button class="btn pri" data-act="pay-ok" data-id="${x.id}">Pagar ${eur(x.a)}</button></div>`);
+  modal(`<h2>Pagar ${eur(x.a)}</h2><p class="muted" style="margin-bottom:14px">${esc(x.c)}</p>${payNote()}${payLive() ? '' : '<div class="field"><label for="pm">Mètode</label><select id="pm"><option>Targeta</option><option>Bizum</option><option>Apple Pay / Google Pay</option></select></div>'}<div class="acts"><button class="btn" data-act="close">Cancel·lar</button><button class="btn pri" data-act="pay-ok" data-id="${x.id}">Pagar ${eur(x.a)}</button></div>`);
 }
 function applyPaid(x) {
   x.st = 'pagat'; x.d = iso(today0());
-  const m = x.c.match(/^Bo de (\d+)/); if (m) stu(x.s).bo += +m[1];
+  const m = x.c.match(/^Bo de (\d+)/); if (x.bo) stu(x.s).bo += x.bo; else if (m) stu(x.s).bo += +m[1];
   if (/Taxa DGT/.test(x.c) && trv(x.s, 'taxa') === 'pendent') (S.tr[x.s] = S.tr[x.s] || {}).taxa = 'revisio';
 }
 function downloadInvoice(x) {
@@ -1002,7 +1003,7 @@ function vConfig() {
   <div class="card" style="margin-bottom:16px"><div class="card-h"><h2>Marca de l'autoescola</h2><span class="muted sm">Els alumnes i professors veuran el vostre nom i color</span></div>
   <div class="grid g2"><div><div class="field"><label for="bn">Nom de l'autoescola</label><input id="bn" data-act="brand-n" value="${esc(S.brand.name)}" maxlength="40"></div><label>Color principal</label><div class="swatches">${BRAND_COLORS.map(c => `<button class="swatch ${S.brand.c === c[1] ? 'on' : ''}" style="background:${c[1]}" data-act="brand-c" data-c="${c[1]}" aria-label="${c[0]}" title="${c[0]}"></button>`).join('')}</div><label class="chk-row" style="margin-top:14px"><input type="checkbox" data-act="brand-wl" ${wl() ? 'checked' : ''} style="width:auto;min-height:0"> Mostrar la meva marca en lloc de Vial</label></div>
   <div><label>Vista prèvia</label><div class="brand-prev">${wl() ? `<div class="logo wl" style="color:#fff">${logoHtml()}</div>` : `${LOGO}<div><b>Vial</b><div class="sm" style="color:#9aa6b2">${esc(S.brand.name)}</div></div>`}<span class="pill" style="margin-left:auto;background:var(--accent);color:#fff">Botó principal</span></div></div></div></div>
-  ${modsCard()}${cfgCard()}
+  ${modsCard()}${payCard()}${cfgCard()}
   <div class="card" style="margin-bottom:16px"><div class="card-h"><h2>Política de cancel·lacions</h2><span class="muted sm">Percentatge del preu de la classe que es cobra segons l'antelació</span></div><div class="grid g4">${S.policy.slice().sort((x, y) => y.h - x.h).map((x, i, arr) => `<div class="field"><label>${i === 0 ? x.h + ' h o més' : x.h === 0 ? 'Menys de ' + arr[i - 1].h + ' h' : x.h + '–' + arr[i - 1].h + ' h'}</label><div class="row"><input type="number" min="0" max="100" value="${x.pct}" data-act="pol" data-h="${x.h}" aria-label="Percentatge"><span class="muted">%</span></div></div>`).join('')}</div></div>
   <div class="chips">${PERMITS.map(p => `<button class="chip ${ui.cfgP === p.k ? 'on' : ''}" data-act="cfgp" data-k="${p.k}">${p.n}</button>`).join('')}</div>
   <div class="card flush scroll-x" style="margin-bottom:16px"><div class="card-h" style="padding:20px 24px 0"><h2>Packs del carnet ${P.n} · ${P.d}</h2><div class="row"><span class="muted sm">Preu hora: ${eur(P.h)}</span><button class="btn sm" data-act="newpack">${ic('plus')} Nou pack</button></div></div><table><thead><tr><th>Pack</th><th>Hores</th><th>Preu (€)</th><th>€/hora</th><th>Estalvi alumne</th><th>Visible</th><th></th></tr></thead><tbody>
@@ -1732,21 +1733,23 @@ document.addEventListener('click', e => {
     case 'checkout': ui.co = { id: D.id, coupon: '', quotes: 1, method: 'Targeta' }; checkoutModal(); break;
     case 'coupon': ui.co.coupon = $('#cc').value.trim(); checkoutModal(); break;
     case 'co-ok': {
-      const { k, c, ref, credit, total } = coCalc(), q = k.t === 'carnet' ? +ui.co.quotes : 1, t = today0();
+      const { k, c, ref, credit, total: total0 } = coCalc(), q = k.t === 'carnet' ? +ui.co.quotes : 1, t = today0(), total = +(total0 * (1 + (q > 1 ? finFee(q) : 0) / 100)).toFixed(2), live = payLive(); let firstId = null;
       let tgt = me; if (ui.co.newP) { tgt = { id: 's' + nid(), pid: me.pid, n: me.n, tel: me.tel, mail: me.mail, alta: iso(today0()), p: ui.co.newP, bo: 0, ref: me.ref }; S.stu.push(tgt); S.me = tgt.id; }
       if (c && !c.ref) c.usos++;
       if (ref) { me.refBy = ref.id; ref.credit = (ref.credit || 0) + 25; }
       me.credit = +((me.credit || 0) - credit).toFixed(2);
       for (let i = 1; i <= q; i++) {
         const am = i < q ? +(total / q).toFixed(2) : +(total - +(total / q).toFixed(2) * (q - 1)).toFixed(2);
-        S.pay.push({ id: nid(), s: tgt.id, c: q > 1 ? `${packTitle(k)} · quota ${i}/${q}` : packTitle(k), a: am, d: iso(addDays(t, (i - 1) * 30)), st: i === 1 ? 'pagat' : 'pendent' });
+        const row = { id: nid(), s: tgt.id, c: q > 1 ? `${packTitle(k)} · quota ${i}/${q}` : packTitle(k), a: am, d: iso(addDays(t, (i - 1) * 30)), st: i === 1 && !live ? 'pagat' : 'pendent' };
+        if (live && i === 1) { row.bo = k.n; firstId = row.id; } S.pay.push(row);
       }
-      tgt.bo += k.n; if (k.t === 'carnet') (S.tr[tgt.id] = S.tr[tgt.id] || {}).taxa = 'ok';
+      if (!live) tgt.bo += k.n; if (k.t === 'carnet') (S.tr[tgt.id] = S.tr[tgt.id] || {}).taxa = 'ok';
       const nw = ui.co.newP; if (nw) { ui.page = 'inici'; ui.co.newP = null; ui.picks = []; }
+      if (live) { save(); closeModal(); return payStart([firstId]); }
       save(); closeModal(); render(); toast(nw ? `Carnet ${PERM(tgt.p).n} afegit. Ja pots reservar les teves pràctiques` : k.t === 'carnet' ? `Carnet contractat. ${k.n} pràctiques afegides al bo` : `${k.n} pràctiques afegides al teu bo`); break;
     }
     case 'pay': payModal(P()); break;
-    case 'pay-ok': { applyPaid(P()); save(); closeModal(); render(); toast('Pagament correcte'); break; }
+    case 'pay-ok': { if (payLive()) { closeModal(); return payStart([P().id]); } applyPaid(P()); save(); closeModal(); render(); toast('Pagament correcte'); break; }
     case 'inv': downloadInvoice(P()); toast('Factura descarregada'); break;
     // --- missatges
     // --- professor: registre de classe

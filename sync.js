@@ -25,6 +25,7 @@
     catch { online = false; setTimeout(flush, 3000); }
     busy = false; if (JSON.stringify(strip(S)) !== JSON.stringify(acked)) { clearTimeout(timer); timer = setTimeout(flush, 150); }
   }
+  window.syncNow = async () => { clearTimeout(timer); for (let i = 0; i < 30; i++) { if (!busy) { await flush(); if (!busy && JSON.stringify(strip(S)) === JSON.stringify(acked)) return true; } await new Promise(r => setTimeout(r, 100)); } return false; };
   window.onSave = () => { clearTimeout(timer); timer = setTimeout(flush, 120); };
   function listen() {
     if (es) es.close(); es = new EventSource(URLB + '/api/events?token=' + token);

@@ -134,7 +134,7 @@ const LV = ['Sense treballar', 'Iniciat', 'En progrés', 'Ho domina'];
 
 const QUIZ = [
   { q: 'En una rotonda, qui té prioritat?', o: ['Qui hi entra', 'Qui ja circula per dins', 'El vehicle més gran'], a: 1 },
-  { q: 'Quina és la velocitat màxima en una via urbana d\'un sol carril per sentit?', o: ['30 km/h', '50 km/h', '70 km/h'], a: 1 },
+  { q: 'Quina és la velocitat màxima en una via urbana d\'un sol carril per sentit?', o: ['30 km/h', '50 km/h', '70 km/h'], a: 0 },
   { q: 'Amb quina distància has de senyalitzar un canvi de carril?', o: ['Just en moure el volant', 'Amb temps suficient abans de fer la maniobra', 'Només si hi ha cotxes darrere'], a: 1 },
   { q: 'Un semàfor amb l\'ambre intermitent significa…', o: ['Parar sempre', 'Precaució i respectar la prioritat', 'Accelerar per passar'], a: 1 },
   { q: 'Quina és la taxa màxima d\'alcohol en sang per a un conductor novell?', o: ['0,5 g/l', '0,3 g/l', '0,15 g/l'], a: 1 },
@@ -553,6 +553,7 @@ function renderLogin() {
     <section class="lg-l"><div class="logo ${wl() ? 'wl' : ''}">${logoHtml()}</div><div><h2>Gestió integral d'autoescoles</h2><p>Reserves, seguiment del temari, tràmits, pagaments i exàmens en un únic espai de treball.</p></div><small>Entorn de demostració amb dades de mostra</small></section>
     <section class="lg-r"><div class="lg-box"><h1>Accés al compte</h1><p class="muted">Tria el perfil amb el qual vols entrar a l'entorn de demostració. No cal cap contrasenya.</p>
     <div class="lg-list">${P.map(p => `<button data-act="login" data-r="${p[0]}"><span class="avatar">${ini(p[2])}</span><span class="lg-t"><b>${p[1]}</b><small>${p[2]} · ${p[3]}</small></span>${ic('right')}</button>`).join('')}</div>
+    <button class="btn lg-app" data-act="appmode">Obrir en mode app (mòbil)</button>
     ${wl() ? '' : '<a class="lg-back" href="index.html">← Tornar a la presentació</a>'}</div></section></div>`;
 }
 function render() {

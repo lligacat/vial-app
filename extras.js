@@ -68,16 +68,22 @@ const QB = [];
 const qStats = sid => { const s = S.tq[sid] || {}, th = {}; THEMES.forEach(t => th[t] = { ok: 0, ko: 0 }); QB.forEach(q => { const r = s[q.id]; if (r) { th[q.t].ok += r.ok || 0; th[q.t].ko += r.ko || 0; } }); return th; };
 const qFailed = sid => QB.filter(q => ((S.tq[sid] || {})[q.id] || {}).bad);
 const shuffle = a => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+// Inteli-test: tria les preguntes donant més pes a les que l'alumne falla o encara no ha vist, i als temes més fluixos
+function intelPick(sid, n) {
+  const st = S.tq[sid] || {}, th = qStats(sid), pool = QB.map(q => { const r = st[q.id], t = th[q.t], tot = t.ok + t.ko, rate = tot ? t.ko / tot : .5; let w = (r ? (r.bad ? 4 : 1 / (1 + r.ok)) : 2) * (1 + 3 * rate); return { q, w }; }), out = [];
+  while (out.length < n && pool.length) { const T = pool.reduce((a, x) => a + x.w, 0); let r = Math.random() * T, i = 0; for (; i < pool.length - 1; i++) { r -= pool[i].w; if (r <= 0) break; } out.push(pool.splice(i, 1)[0].q); }
+  return out;
+}
 function tqStart(mode, theme) {
   const sid = S.me; let qs;
-  if (mode === 'sim') qs = shuffle(QB).slice(0, 30); else if (mode === 'err') qs = shuffle(qFailed(sid)).slice(0, 15); else qs = shuffle(QB.filter(q => q.t === theme)).slice(0, 8);
+  if (mode === 'sim') qs = shuffle(QB).slice(0, 30); else if (mode === 'intel') qs = intelPick(sid, 20); else if (mode === 'err') qs = shuffle(qFailed(sid)).slice(0, 15); else qs = shuffle(QB.filter(q => q.t === theme)).slice(0, 8);
   if (!qs.length) return toast('Encara no tens errors per repassar');
   ui.tq = { mode, theme, qs, i: 0, ans: [], start: Date.now(), fi: false, pick: null };
 }
 function tqFinish() {
   const q = ui.tq, sid = S.me, st = (S.tq[sid] = S.tq[sid] || {}); q.fi = true; q.score = q.qs.filter((x, k) => q.ans[k] === x.a).length;
   q.qs.forEach((x, k) => { const r = (st[x.id] = st[x.id] || { ok: 0, ko: 0 }); if (q.ans[k] === x.a) { r.ok++; r.bad = false; } else { r.ko++; r.bad = true; } });
-  const ok = q.mode === 'sim' ? q.qs.length - q.score <= 3 : q.qs.length - q.score <= 1;
+  const ok = q.mode === 'sim' ? q.qs.length - q.score <= 3 : q.mode === 'intel' ? q.qs.length - q.score <= 2 : q.qs.length - q.score <= 1;
   (S.tests[sid] = S.tests[sid] || []).push({ d: iso(today0()), n: q.score, of: q.qs.length, ok, m: q.mode });
   if (q.mode === 'sim') notify('adm', `${stu(sid).n} ha fet un simulacre de test`, `${q.score}/${q.qs.length} · ${ok ? 'aprovat' : 'suspès'}`, { ic: 'test', go: 'alumnes' });
   save();
@@ -88,10 +94,11 @@ function testsScreen(me) {
   const disc = '<p class="m-note" style="margin:10px 0 0">Preguntes de mostra del centre, no són les oficials de la DGT.</p>';
   if (!q) {
     const st = qStats(me.id), failed = qFailed(me.id).length, sims = (S.tests[me.id] || []).filter(h => h.m === 'sim'), okS = sims.filter(h => h.ok).length;
-    return `<div class="m-card"><div class="m-lab">Simulacre d'examen</div><h2>30 preguntes · 30 minuts</h2><p class="m-sub">Aprova amb un màxim de 3 errors. Has fet ${sims.length} simulacres (${okS} aprovats).</p><button class="m-btn" data-m="tq-start" data-mode="sim">Començar el simulacre</button></div>
+    return `<div class="m-card m-intel"><div class="m-lab">Inteli-test</div><h2>Test que s'adapta a tu</h2><p class="m-sub">20 preguntes triades segons els teus errors i els temes que encara no has practicat. Com més el facis servir, més t'afina.</p><button class="m-btn" data-m="tq-start" data-mode="intel">Començar l'Inteli-test</button></div>
+    <div class="m-card" style="margin-top:12px"><div class="m-lab">Simulacre d'examen</div><h2>30 preguntes · 30 minuts</h2><p class="m-sub">Aprova amb un màxim de 3 errors. Has fet ${sims.length} simulacres (${okS} aprovats).</p><button class="m-btn" data-m="tq-start" data-mode="sim">Començar el simulacre</button></div>
     <div class="m-sec">Test per tema</div><div class="m-list">${THEMES.map(t => { const s = st[t], tot = s.ok + s.ko, p = tot ? Math.round(s.ok / tot * 100) : null; return `<button class="m-cl" data-m="tq-start" data-mode="tema" data-theme="${esc(t)}"><span class="m-clt"><b>${t}</b><small>${tot ? `${p}% d'encert · ${tot} respostes` : '8 preguntes · encara no l\'has provat'}</small><div class="m-bar sm"><i style="width:${p || 0}%;${p != null && p < 60 ? 'background:#e0452f' : ''}"></i></div></span>${ic('right')}</button>`; }).join('')}</div>
     <div class="m-card" style="margin-top:12px"><div class="m-lab">Repassar errors</div><h2>${failed} ${failed === 1 ? 'pregunta' : 'preguntes'} per repassar</h2><p class="m-sub">Les que has fallat l'última vegada.</p><button class="m-btn ${failed ? '' : 'o'}" data-m="tq-start" data-mode="err" ${failed ? '' : 'disabled'}>Repassar-les</button></div>
-    <div class="m-sec">Historial</div><div class="m-list">${hist.slice(0, 6).map(h => `<div class="m-pay"><span class="m-clt"><b>${fmtData(h.d)}</b><small>${h.m === 'sim' ? 'Simulacre' : h.m === 'err' ? 'Repàs d\'errors' : 'Test per tema'}</small></span><b>${h.n}/${h.of}</b><span class="pill ${(h.ok != null ? h.ok : h.n >= h.of - 1) ? 'ok' : 'bad'}">${(h.ok != null ? h.ok : h.n >= h.of - 1) ? 'Aprovat' : 'Suspès'}</span></div>`).join('') || '<div class="m-empty">Encara no has fet cap test.</div>'}</div>${disc}`;
+    <div class="m-sec">Historial</div><div class="m-list">${hist.slice(0, 6).map(h => `<div class="m-pay"><span class="m-clt"><b>${fmtData(h.d)}</b><small>${h.m === 'sim' ? 'Simulacre' : h.m === 'intel' ? 'Inteli-test' : h.m === 'err' ? 'Repàs d\'errors' : 'Test per tema'}</small></span><b>${h.n}/${h.of}</b><span class="pill ${(h.ok != null ? h.ok : h.n >= h.of - 1) ? 'ok' : 'bad'}">${(h.ok != null ? h.ok : h.n >= h.of - 1) ? 'Aprovat' : 'Suspès'}</span></div>`).join('') || '<div class="m-empty">Encara no has fet cap test.</div>'}</div>${disc}`;
   }
   if (q.fi) {
     const bad = q.qs.filter((x, k) => q.ans[k] !== x.a), tot = q.qs.length, ok = q.mode === 'sim' ? bad.length <= 3 : bad.length <= 1;
@@ -102,7 +109,7 @@ function testsScreen(me) {
     <div class="m-row2"><button class="m-btn o" data-m="tq-exit">Sortir</button><button class="m-btn" data-m="tq-start" data-mode="${q.mode}" data-theme="${esc(q.theme || '')}">Tornar-ho a provar</button></div>`;
   }
   const x = q.qs[q.i], reveal = q.mode !== 'sim' && q.pick != null, left = tqLeft();
-  return `<div class="m-card"><div class="m-row2s" style="grid-template-columns:1fr auto;text-align:left;margin-bottom:10px"><div><span class="m-lab">${q.mode === 'sim' ? 'Simulacre' : q.mode === 'err' ? 'Repàs d\'errors' : esc(q.theme)} · ${q.i + 1} de ${q.qs.length}</span></div>${left != null ? `<div data-timer="tq"><b class="tm-t" style="font-size:18px">${fmtMS(left)}</b></div>` : ''}</div><div class="m-bar"><i style="width:${q.i / q.qs.length * 100}%"></i></div><h2 style="margin:14px 0">${esc(x.q)}</h2>
+  return `<div class="m-card"><div class="m-row2s" style="grid-template-columns:1fr auto;text-align:left;margin-bottom:10px"><div><span class="m-lab">${q.mode === 'sim' ? 'Simulacre' : q.mode === 'err' ? 'Repàs d\'errors' : q.mode === 'intel' ? 'Inteli-test' : esc(q.theme)} · ${q.i + 1} de ${q.qs.length}</span></div>${left != null ? `<div data-timer="tq"><b class="tm-t" style="font-size:18px">${fmtMS(left)}</b></div>` : ''}</div><div class="m-bar"><i style="width:${q.i / q.qs.length * 100}%"></i></div><h2 style="margin:14px 0">${esc(x.q)}</h2>
   ${x.o.map((o, i) => { const cls = reveal ? (i === x.a ? 'right' : i === q.pick ? 'wrong' : '') : (q.pick === i ? 'sel' : ''); return `<button class="m-opt ${cls}" ${reveal ? 'disabled' : ''} data-m="tq-ans" data-i="${i}">${esc(o)}</button>`; }).join('')}
   ${reveal ? `<button class="m-btn" data-m="tq-next">${q.i + 1 >= q.qs.length ? 'Veure el resultat' : 'Següent'}</button>` : ''}</div><button class="m-link" data-m="tq-exit">Abandonar el test</button>`;
 }

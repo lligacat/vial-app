@@ -1,7 +1,7 @@
 /* Vial · mode app (alumne i professor): interfície mòbil amb barra inferior, avisos, guia del carnet,
    documents, temporitzador, mode examen i recursos. Es carrega després de core2.js. */
 ICONS.menu = '<path d="M4 7h16M4 12h16M4 17h16"/>'; ICONS.user = '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'; ICONS.play = '<path d="M8 5l12 7-12 7z"/>'; ICONS.x = '<path d="M6 6l12 12M18 6L6 18"/>';
-const isApp = () => { try { return !!(window.APP_MODE || /[?&]app=1/.test(location.search) || sessionStorage.getItem('vial-appmode') === '1' || (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || innerWidth <= 720); } catch { return false; } };
+const isApp = () => { try { if (sessionStorage.getItem('vial-appmode') === '0') return false; return !!(window.APP_MODE || /[?&]app=1/.test(location.search) || sessionStorage.getItem('vial-appmode') === '1' || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)); } catch { return false; } };
 ui.m = { tab: null, sub: null, sheet: null, bd: null, rs: 'ex', fq: '' };
 const mq = s => document.querySelector(s);
 const ring2 = (p, size, wd, col, track, cls = '') => { const r = (size - wd) / 2, C = 2 * Math.PI * r; return `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg);flex:none"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${track}" stroke-width="${wd}"/><circle class="tm-a" data-c="${C.toFixed(1)}" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="${wd}" stroke-linecap="round" stroke-dasharray="${(C * clamp(p)).toFixed(1)} ${C.toFixed(1)}"/></svg>`; };
@@ -21,6 +21,7 @@ function renderAppLogin() {
   <button class="m-pro" data-act="login" data-r="alumne"><span class="m-av">LR</span><span><b>Soc alumne</b><small>Laia Roca · carnet B</small></span>${ic('right')}</button>
   <button class="m-pro" data-act="login" data-r="prof"><span class="m-av">JP</span><span><b>Soc professor</b><small>Jordi Puig · carnets B i B+E</small></span>${ic('right')}</button>
   <button class="m-pro" data-act="login" data-r="admin"><span class="m-av">AB</span><span><b>Direcció</b><small>Anna Bosch · panell de gestió</small></span>${ic('right')}</button>
+  <button class="m-link" data-m="desktop">Veure la web completa</button>
   <small class="m-note">Dades de mostra. Els avisos funcionen entre pestanyes i dispositius del mateix navegador.</small></div></div>`;
 }
 
@@ -171,8 +172,8 @@ function tTab(t) {
   }
   if (t === 'res') {
     const rs = ui.m.rs;
-    return `${mHead('Recursos', 'Per explicar en temps real', hdrR())}<div class="m-seg"><button class="${rs === 'ex' ? 'on' : ''}" data-m="rs" data-v="ex">Animacions</button><button class="${rs === 'vid' ? 'on' : ''}" data-m="rs" data-v="vid">Vídeos</button></div>
-    ${rs === 'ex' ? `<div class="m-list">${EXPL.map(e => `<div class="m-rs"><div class="m-svg">${e.svg()}</div><div class="m-rst"><b>${e.t}</b><small>${e.sub}</small><div class="m-row2"><button class="m-btn sm o" data-m="expl" data-id="${e.id}">Obrir</button><button class="m-btn sm" data-m="show" data-k="ex" data-id="${e.id}">Mostrar a l'alumne</button></div></div></div>`).join('')}</div>` : `<div class="m-list">${S.vid.slice(0, 16).map(v => `<div class="m-rs v"><div class="m-rst"><b>${esc(v.t)}</b><small>${esc(v.m)} · ${v.d} min</small><div class="m-row2"><button class="m-btn sm o" data-m="vidp" data-id="${v.id}">Veure</button><button class="m-btn sm" data-m="show" data-k="vid" data-id="${v.id}">Mostrar a l'alumne</button></div></div></div>`).join('')}</div>`}`;
+    return `${mHead('Recursos', 'Per explicar en temps real', hdrR())}<div class="m-seg"><button class="${rs === 'ex' ? 'on' : ''}" data-m="rs" data-v="ex">Explicacions</button><button class="${rs === 'vid' ? 'on' : ''}" data-m="rs" data-v="vid">Vídeos</button></div>
+    ${rs === 'ex' ? `<div class="m-list">${EXPL.map(e => `<div class="m-rs"><div class="m-rst"><b>${e.t}</b><small>${e.sub}</small><div class="m-row2"><button class="m-btn sm o" data-m="expl" data-id="${e.id}">Obrir</button><button class="m-btn sm" data-m="show" data-k="ex" data-id="${e.id}">Mostrar a l'alumne</button></div></div></div>`).join('')}</div>` : `<div class="m-list">${S.vid.slice(0, 16).map(v => `<div class="m-rs v"><div class="m-rst"><b>${esc(v.t)}</b><small>${esc(v.m)} · ${v.d} min</small><div class="m-row2"><button class="m-btn sm o" data-m="vidp" data-id="${v.id}">Veure</button><button class="m-btn sm" data-m="show" data-k="vid" data-id="${v.id}">Mostrar a l'alumne</button></div></div></div>`).join('')}</div>`}`;
   }
   // avui
   const td2 = realLessons().filter(l => l.i === iid && l.d === td && l.st !== 'feta' && l.st !== 'absent').sort((a, b) => a.h - b.h), pend = toRegister(iid), nxt = realLessons().filter(l => l.i === iid && l.st === 'reservada' && l.d > td && !isPast(l.d, l.h)).sort((a, b) => (a.d + p2(a.h)).localeCompare(b.d + p2(b.h))).slice(0, 5);
@@ -208,7 +209,7 @@ function sheetHtml(role) {
     let e = null, v = null, by = '';
     if (sh.k === 'show') { const w = S.show[S.me]; if (w) { by = w.by; if (w.k === 'ex') e = EXPL.find(x => x.id === w.id); else v = S.vid.find(x => x.id === w.id); } } else e = EXPL.find(x => x.id === sh.id);
     title = e ? e.t : v ? v.t : 'Recurs';
-    c = `${by ? `<div class="m-live"><i></i>${esc(by)} t'ho està mostrant</div>` : ''}${e ? `<div class="m-svg big">${e.svg()}</div><p class="m-sub">${e.sub}</p><ol class="m-ol">${e.steps.map(x => `<li>${x}</li>`).join('')}</ol>` : v ? `<div class="m-player">${playerHtml(v)}</div><p class="m-sub">${esc(v.m)} · ${v.d} min</p>` : ''}<button class="m-btn" data-m="sheet-x">Entès</button>`;
+    c = `${by ? `<div class="m-live"><i></i>${esc(by)} t'ho està mostrant</div>` : ''}${e ? `<p class="m-sub">${e.sub}</p><ol class="m-ol">${e.steps.map(x => `<li>${x}</li>`).join('')}</ol>` : v ? `<div class="m-player">${playerHtml(v)}</div><p class="m-sub">${esc(v.m)} · ${v.d} min</p>` : ''}<button class="m-btn" data-m="sheet-x">Entès</button>`;
   } else if (sh.k === 'vidp') { const v = S.vid.find(x => x.id === sh.id); title = v.t; c = `<div class="m-player">${playerHtml(v)}</div><p class="m-sub">${esc(v.m)} · ${v.d} min</p><button class="m-btn" data-m="sheet-x">Tancar</button>`; }
   else if (sh.k === 'stu') {
     const s = stu(sh.id), g = guide(s.id), ls = doneLs(s.id).slice(-3).reverse(); title = s.n;
@@ -255,7 +256,7 @@ document.addEventListener('click', e => {
     case 'read-all': ntRead(recipKey()); render(); break;
     case 'nt': { ntRead(recipKey(), +D.id); mNavTo(D.go); render(); break; }
     case 'perm': if (window.Notification) Notification.requestPermission().then(p => { toast(p === 'granted' ? 'Avisos activats' : 'Avisos no activats'); render(); }); else toast('Aquest navegador no admet avisos'); break;
-    case 'desktop': try { sessionStorage.setItem('vial-appmode', '0'); } catch { } if (window.APP_MODE) window.APP_MODE = false; location.search = ''; break;
+    case 'desktop': try { sessionStorage.setItem('vial-appmode', '0'); } catch { } history.replaceState(null, '', location.pathname); render(); break;
     case 'penal': m.sheet = { k: 'penal' }; render(); break;
     case 'rs': m.rs = D.v; render(); break;
     case 'expl': m.sheet = { k: 'expl', id: D.id }; render(); break;

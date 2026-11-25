@@ -23,7 +23,7 @@ const EXAM_SEC = {
   ].concat(fam === 'cotxe' ? [['Maniobres', [['apa', 'Aparcament (bateria, línia o diagonal)', 'D'], ['mre', 'Marxa enrere', 'D']]]] : []),
   man: fam => [['Maniobres', fam === 'remolc'
     ? [['eng', 'Enganxar i desenganxar el remolc', 'D'], ['mre', 'Marxa enrere amb remolc', 'D'], ['lli', 'Llums i connexions del remolc', 'L'], ['cons', 'Toc d\'obstacles o cons', 'E']]
-    : [['rev', 'Revisió prèvia del vehicle', 'D'], ['mre', 'Marxa enrere i aparcament', 'D'], ['mol', 'Maniobra al moll de càrrega', 'D'], ['tac', 'Tacògraf i documentació', 'L'], ['cons', 'Toc d\'obstacles o cons', 'E']]]]],
+    : [['rev', 'Revisió prèvia del vehicle', 'D'], ['mre', 'Marxa enrere i aparcament', 'D'], ['mol', 'Maniobra al moll de càrrega', 'D'], ['tac', 'Tacògraf i documentació', 'L'], ['cons', 'Toc d\'obstacles o cons', 'E']]]],
   circuit: () => [['Pista', [['slo', 'Eslàlom a poca velocitat', 'D'], ['vuit', 'Vuit i gir tancat', 'D'], ['equ', 'Equilibri a baixa velocitat', 'D'], ['fre2', 'Frenada d\'emergència', 'D'], ['esq', 'Esquivar un obstacle', 'D'], ['pie', 'Caiguda o peu a terra', 'E'], ['cas', 'Casc i equip de protecció', 'E']]]],
 };
 const ROUTES = {

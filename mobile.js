@@ -100,7 +100,7 @@ function guideHtml(me, g, P) {
   <div class="m-sec">Etapes</div><div class="m-steps">${g.steps.map((s, i) => { const p = Math.round(clamp(s.p) * 100); return `<div class="m-stp ${p >= 100 ? 'ok' : p > 0 ? 'on' : ''}"><span class="m-sn">${p >= 100 ? ic('check') : i + 1}</span><div><b>${s.l}</b><div class="m-bar"><i style="width:${p}%"></i></div></div><em>${p}%</em></div>`; }).join('')}</div>
   <div class="m-sec">Objectius per fer</div><div class="m-list">${g.ob.map(o => `<button class="m-ob" data-m="go" data-v="${o.go}"><span class="m-ck"></span><span><b>${esc(o.t)}</b><small>${esc(o.x)}</small></span>${ic('right')}</button>`).join('') || '<div class="m-empty">Tot fet!</div>'}</div>
   <div class="m-sec">Punts a reforçar</div><div class="m-card">${sk.map(s => `<div class="m-skr"><span>${esc(s.n)}</span><div class="m-bar sm"><i style="width:${(s.l / 3) * 100}%"></i></div></div>`).join('')}</div>
-  <div class="m-sec">Simulacres d'examen</div><div class="m-list">${sim.map(m => `<div class="m-sm ${m.ok ? 'ok' : 'no'}"><b>${m.ok ? 'Dins dels criteris' : 'Cal millorar'}</b><small>${fmtData(iso(new Date(m.ts)))} · ${m.t.E} elim. · ${m.t.D} defic. · ${m.t.L} lleus</small></div>`).join('') || '<div class="m-empty">Encara no n\'has fet cap. El professor te\'n pot fer un.</div>'}</div>
+  <div class="m-sec">Simulacres d'examen</div><div class="m-list">${sim.map(m => `<button class="m-sm ${m.ok ? 'ok' : 'no'}" data-m="simdet" data-id="${m.id}"><b>${m.ok ? 'Dins dels criteris' : 'Cal millorar'}</b><small>${fmtData(iso(new Date(m.ts)))} · ${m.t.E} elim. · ${m.t.D} defic. · ${m.t.L} lleus</small></button>`).join('') || '<div class="m-empty">Encara no n\'has fet cap. El professor te\'n pot fer un.</div>'}</div>
   <div class="m-sec">Tests</div><div class="m-card"><div class="m-row2s"><div><b>${tests.length}</b><small>fets</small></div><div><b>${passed}</b><small>aprovats</small></div><div><b>${tests.length ? Math.round(tests.reduce((a, h) => a + h.n / h.of, 0) / tests.length * 100) : 0}%</b><small>mitjana</small></div></div></div>
   <button class="m-btn o" data-act="report" data-id="${me.id}">Descarregar el meu informe</button>`;
 }
@@ -167,9 +167,7 @@ function tTab(t) {
   }
   if (t === 'exam') {
     const run = S.simRun[iid];
-    if (run) return simRunHtml(run);
-    const sims = S.sim.filter(m => m.i === iid).slice(-5).reverse();
-    return `${mHead('Mode examen', 'Simulacre amb faltes', hdrR())}<div class="m-card m-tip"><b>Com funciona</b><p>Tria un alumne, comença el cronòmetre i anota cada falta (lleu, deficient o eliminatòria) mentre condueix. En acabar, l'alumne rep el resultat al mòbil.</p></div><div class="m-sec">Tria l'alumne</div><div class="m-list">${myStudents(iid).map(s => `<button class="m-st" data-m="sim-start" data-id="${s.id}"><span class="m-av">${ini(s.n)}</span><span class="m-clt"><b>${esc(s.n)} ${pm(s.p)}</b><small>${S.sim.filter(m => m.s === s.id).length} simulacres fets</small></span>${ic('play')}</button>`).join('')}</div><div class="m-sec">Últims simulacres</div><div class="m-list">${sims.map(m => `<div class="m-sm ${m.ok ? 'ok' : 'no'}"><b>${esc(stu(m.s).n)} · ${m.ok ? 'dins dels criteris' : 'cal millorar'}</b><small>${m.t.E} elim. · ${m.t.D} defic. · ${m.t.L} lleus · ${m.dur} min</small></div>`).join('') || '<div class="m-empty">Encara no n\'has fet cap.</div>'}</div>`;
+    return run ? simRunHtml(run) : examHome(iid);
   }
   if (t === 'res') {
     const rs = ui.m.rs;
@@ -187,15 +185,6 @@ function tTab(t) {
   ${pend.length ? `<div class="m-sec">Pendents de registrar</div><div class="m-list">${pend.map(l => `<div class="m-pay"><span class="m-clt"><b>${esc(stu(l.s).n)}</b><small>${fmtData(l.d)} · ${p2(l.h)}:00</small></span><button class="m-btn sm" data-act="close-open" data-id="${l.id}">Registrar</button></div>`).join('')}</div>` : ''}
   <div class="m-sec">Properes</div><div class="m-list">${nxt.map(l => `<div class="m-cl"><span class="m-cd"><b>${new Date(l.d + 'T00:00').getDate()}</b><small>${MESOS[new Date(l.d + 'T00:00').getMonth()]}</small></span><span class="m-clt"><b>${p2(l.h)}:00 · ${esc(stu(l.s).n)}</b><small>${esc(l.pt || 'Punt per concretar')}</small></span></div>`).join('') || '<div class="m-empty">Cap classe els propers dies.</div>'}</div>`;
 }
-function simRunHtml(run) {
-  const s = stu(run.s), t = simTot(run.f), v = simVerdict(t), left = Math.round(S.cfg.simMin * 60 - (Date.now() - run.ts) / 1000);
-  return `<div class="m-sim ${v.ok ? 'ok' : 'no'}"><div class="m-simh"><div><small>Simulacre d'examen</small><b>${esc(s.n)} · carnet ${PERM(s.p).n}</b></div><div class="m-simt" data-timer="sim"><b class="tm-t">${fmtMS(left)}</b></div></div>
-  <div class="m-tot"><div class="${t.E ? 'bad' : ''}"><b>${t.E}</b><small>Eliminatòries</small></div><div class="${t.D >= S.cfg.simD ? 'bad' : t.D ? 'warn' : ''}"><b>${t.D}</b><small>Deficients</small></div><div class="${t.L >= S.cfg.simL ? 'bad' : t.L ? 'warn' : ''}"><b>${t.L}</b><small>Lleus</small></div></div><div class="m-verd">${v.ok ? 'Va dins dels criteris' : esc(v.why) + ' · no apte'}</div></div>
-  ${FAULTS.map(g => `<div class="m-sec">${g[0]}</div><div class="m-list">${g[1].map(f => { const c = run.f[f[0]] || {}; return `<div class="m-ft"><span>${f[1]}</span><div class="m-fb">${[['L', 'Lleu'], ['D', 'Defic.'], ['E', 'Elim.']].map(x => `<div class="m-fc ${x[0]}"><button data-m="sim" data-k="${f[0]}" data-c="${x[0]}" data-d="1"><b>${c[x[0]] || 0}</b><small>${x[1]}</small></button><button class="mn" data-m="sim" data-k="${f[0]}" data-c="${x[0]}" data-d="-1" aria-label="Treure">−</button></div>`).join('')}</div></div>`; }).join('')}</div>`).join('')}
-  <div class="m-field"><label>Observacions</label><textarea id="m-simnote" rows="2" data-m-in="simnote" placeholder="Què ha anat bé i què cal millorar">${esc(run.note || '')}</textarea></div>
-  <div class="m-row2"><button class="m-btn o" data-m="sim-cancel">Cancel·lar</button><button class="m-btn" data-m="sim-end">Finalitzar</button></div>`;
-}
-
 // ---------- fulls (sheets) ----------
 function sheetHtml(role) {
   const sh = ui.m.sheet; if (!sh) return '';
@@ -233,8 +222,7 @@ function sheetHtml(role) {
   } else if (sh.k === 'pickres') {
     title = 'Mostrar un recurs'; c = `<div class="m-list">${EXPL.map(e => `<button class="m-cl" data-m="show-now" data-k="ex" data-id="${e.id}" data-sid="${sh.sid}"><span class="m-clt"><b>${e.t}</b><small>${e.sub}</small></span>${ic('right')}</button>`).join('')}</div>`;
   } else if (sh.k === 'nudge') { title = 'Enviar avís'; c = `<div class="m-field"><label>Missatge per a ${esc(stu(sh.id).n)}</label><textarea id="m-nudge" rows="3" placeholder="Ex. No oblidis portar el DNI"></textarea></div><div class="m-row2"><button class="m-btn o" data-m="sheet-x">Cancel·lar</button><button class="m-btn" data-m="nudge-go" data-id="${sh.id}">Enviar</button></div>`; }
-  else if (sh.k === 'simres') { const m = S.sim[S.sim.length - 1]; title = 'Resultat del simulacre'; c = `<div class="m-card ${m.ok ? 'm-ok' : 'm-bad'}"><h2>${m.ok ? 'Dins dels criteris' : 'Cal millorar'}</h2><p>${esc(m.why)}</p></div><div class="m-tot"><div><b>${m.t.E}</b><small>Elim.</small></div><div><b>${m.t.D}</b><small>Defic.</small></div><div><b>${m.t.L}</b><small>Lleus</small></div></div><p class="m-sub">L'alumne ja ho té al mòbil.</p><button class="m-btn" data-m="sheet-x">Tancar</button>`; }
-  else if (sh.k === 'simend') { const r = S.simRun[S.meI], t = simTot(r.f), v = simVerdict(t); title = 'Finalitzar simulacre'; c = `<div class="m-tot"><div><b>${t.E}</b><small>Elim.</small></div><div><b>${t.D}</b><small>Defic.</small></div><div><b>${t.L}</b><small>Lleus</small></div></div><div class="m-verd ${v.ok ? 'ok' : 'no'}">${v.ok ? 'Dins dels criteris' : esc(v.why)}</div><div class="m-row2"><button class="m-btn o" data-m="sheet-x">Continuar</button><button class="m-btn" data-m="sim-save">Desar i avisar l'alumne</button></div>`; }
+  else if (/^sim/.test(sh.k)) { [title, c] = examSheet(sh); }
   else if (sh.k === 'ios') { title = 'Instal·lar l\'app'; c = `<ol class="m-ol"><li>Toca el botó de compartir del navegador.</li><li>Tria «Afegeix a la pantalla d'inici».</li><li>Obre l'app des de la icona nova.</li></ol><button class="m-btn" data-m="sheet-x">Entès</button>`; }
   else if (sh.k === 'penal') { title = 'Avisos d\'absència'; c = `<p class="m-sub">Si no pots venir a una classe, avisa des de «Detalls i punt» o «No puc assistir». L'hora queda lliure per a altres alumnes i la pràctica torna al teu bo. L'autoescola decideix si aplica una penalització, segons aquesta política:</p><div class="m-list">${policyRows().map(r => `<div class="m-pay"><span class="m-clt"><b>${r.lab}</b></span><b>${r.cost}</b></div>`).join('')}</div><button class="m-btn" data-m="sheet-x">Entès</button>`; }
   return `<div class="m-ov" data-m="sheet-x"><div class="m-sheet" data-m-stop="1"><div class="m-grab"></div><div class="m-sh-t"><b>${esc(title)}</b><button data-m="sheet-x" aria-label="Tancar">${ic('x')}</button></div><div class="m-sh-b">${c}</div></div></div>`;
@@ -250,6 +238,7 @@ document.addEventListener('click', e => {
   if (a === 'sheet-x') { if (e.target.closest('[data-m-stop]') && !e.target.closest('[data-m=sheet-x]')) return; m.sheet = null; return render(); }
   if (el.classList.contains('m-ov') && e.target.closest('[data-m-stop]')) return;
   const me = S.role === 'alumne' ? stu(S.me) : null;
+  if (/^sim/.test(a) && examAct(a, D, m)) return;
   switch (a) {
     case 'tab': m.tab = D.v; m.sub = null; m.anim = true; render(); break;
     case 'sub': m.sub = D.v; m.anim = true; render(); break;

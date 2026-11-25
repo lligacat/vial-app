@@ -199,7 +199,7 @@ function tickTimers() {
     const kind = el.dataset.timer; let left, tot;
     if (kind === 'class') { const c = classClock(+el.dataset.sid); if (!c) return; left = c.left; tot = c.tot; }
     else if (kind === 'tq') { const l = typeof tqLeft === 'function' ? tqLeft() : null; if (l == null) return; left = l; tot = 1800; }
-    else if (kind === 'sim') { const r = S.simRun[S.meI]; if (!r) return; tot = S.cfg.simMin * 60; left = Math.round(tot - (Date.now() - r.ts) / 1000); }
+    else if (kind === 'sim') { const r = S.simRun[S.meI]; if (!r) return; tot = (r.min || S.cfg.simMin) * 60; left = Math.round(tot - (Date.now() - r.ts) / 1000); }
     else { let m = {}; try { m = JSON.parse(sessionStorage.getItem('vial-timer') || '{}'); } catch { } if (!m.start) { left = (m.dur || 3600); tot = m.dur || 3600; } else { left = m.paused ? m.left : Math.round(m.dur - (Date.now() - m.start) / 1000); tot = m.dur; } }
     const txt = el.querySelector('.tm-t'), arc = el.querySelector('.tm-a'); if (txt) { txt.textContent = (left < 0 ? '+' : '') + fmtMS(Math.abs(left)); el.classList.toggle('late', left <= 300); }
     if (arc) { const C = +arc.getAttribute('data-c'); arc.setAttribute('stroke-dasharray', `${(C * clamp(left / tot)).toFixed(1)} ${C}`); }

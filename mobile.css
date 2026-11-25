@@ -174,3 +174,15 @@ body.appmode{background:#0b1220}
 .m-chk{display:flex;gap:10px;align-items:center;font-size:13.5px;color:#4a5668;margin:10px 0}.m-chk input{width:20px;height:20px;min-height:0}
 .m-install{display:flex;align-items:center;gap:12px;position:relative;padding-right:40px}.m-install b{display:block;font-size:14.5px}.m-install small{display:block;color:#6b7686;font-size:12.5px}.m-install>div{flex:1}
 .m-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:0;background:#eef1f5;display:grid;place-items:center;color:#6b7686}.m-x .ico{width:14px;height:14px}
+
+/* mode examen: fitxa de l'examinador */
+button.m-sm{width:100%;text-align:left;border:0;border-left:5px solid #c4cedb;font-family:inherit;cursor:pointer}button.m-sm.ok{border-left-color:#16a05a}button.m-sm.no{border-left-color:#e0452f}
+.m-chips2{display:flex;gap:8px;overflow-x:auto;margin:4px 0 8px}.m-chips2 button{border:0;background:#e3e9f1;border-radius:20px;padding:8px 14px;font:600 13px inherit;font-family:inherit;white-space:nowrap}.m-chips2 button.on{background:#12202f;color:#fff}
+.m-hint{font-style:normal;font-weight:500;font-size:11px;padding:2px 7px;border-radius:9px;margin-left:4px;background:#eef2f7;color:#5f6875}.m-hint.D{background:#fff3d6;color:#8a5a00}.m-hint.E{background:#fdeceb;color:#a52a1d}
+.m-nx{border-left:5px solid var(--accent)}.m-nx small{color:#6b7686;font-size:12px}.m-nx h2{font-size:20px;margin:6px 0 12px;line-height:1.25}
+.m-rt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:#fff;border-radius:16px;padding:12px 14px;font-family:inherit}.m-rt .m-clt b{font-size:14.5px}.m-rt .m-clt small{color:#6b7686;font-size:12.5px;display:block}
+.m-rt.ok .m-ck{background:#16a05a;border-color:#16a05a;color:#fff;display:grid;place-items:center}.m-rt .m-ck svg{width:14px;height:14px}
+.m-lg{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:10px 12px;border-left:5px solid #e8c25a}.m-lg.E{border-color:#e0452f}.m-lg.L{border-color:#c4cedb}.m-lg em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums;color:#12202f}.m-lg span{flex:1}.m-lg b{display:block;font-size:14px}.m-lg small{color:#6b7686;font-size:12px}
+.m-lg .mn{border:0;background:#12202f;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px}
+.m-kv{display:grid;grid-template-columns:96px 1fr;gap:8px 10px;margin:12px 0;font-size:13.5px}.m-kv span{color:#6b7686}
+.m-tb{width:100%;border-collapse:collapse;font-size:13.5px}.m-tb th{text-align:left;color:#6b7686;font-weight:600;font-size:12px;padding:4px 2px}.m-tb td{padding:8px 2px;border-top:1px solid #e3e9f1}.m-tb .r{text-align:right}

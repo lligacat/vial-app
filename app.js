@@ -430,7 +430,8 @@ const readiness = sid => {
 };
 const qualified = (i, p) => i.perms.includes(p);
 const works = (i, d, h) => (i.hrs || HORES).includes(h) && (i.dies || [1, 2, 3, 4, 5, 6]).includes(new Date(d + 'T00:00').getDay());
-const busy = (i, d, h) => S.les.some(l => l.i === i && l.d === d && l.h === h && l.st !== 'cancel·lada');
+// S.busy: hores ocupades per altres, que el servidor envia sense noms a alumnes i professors
+const busy = (i, d, h) => S.les.some(l => l.i === i && l.d === d && l.h === h && l.st !== 'cancel·lada') || (S.busy || []).some(l => l.i === i && l.d === d && l.h === h);
 const stBusy = (s, d, h) => S.les.some(l => l.s === s && l.d === d && l.h === h && l.st !== 'cancel·lada' && l.st !== 'bloc');
 const freeInstr = (p, f, d, h) => S.instr.filter(i => qualified(i, p) && (f === 'all' || i.id === f) && works(i, d, h) && !busy(i.id, d, h));
 const vehTxt = (i, p) => (i.veh && i.veh[p]) || i.perms.map(x => PERM(x).n).join(', ');
@@ -629,7 +630,7 @@ function lessonFeedback(l, rateable) {
   return `<div class="fb"><div class="row between wrap"><div><b style="color:var(--ink)">${fmtData(l.d)} · ${p2(l.h)}:00</b> <span class="muted sm">· ${esc(ins(l.i).n)}</span></div>${l.score ? scorePill(l.score) : ''}</div>
   <div class="sm muted" style="margin:2px 0 8px">${ic('pin')} ${esc(l.pt || '—')}</div>
   ${worked.length ? `<div class="row wrap" style="gap:6px;margin-bottom:8px">${worked.map(w => `<span class="pill info">${esc(w.n)} · ${LV[w.v]}</span>`).join('')}</div>` : ''}
-  ${l.note ? `<p style="margin-bottom:6px">${esc(l.note)}</p>` : ''}${l.next ? `<p class="sm"><b>Per a la propera classe:</b> ${esc(l.next)}</p>` : ''}
+  ${l.note ? `<p style="margin-bottom:6px">${esc(l.note)}</p>` : ''}${l.next ? `<p class="sm"><b>Per a la propera classe:</b> ${esc(l.next)}</p>` : ''}${typeof trackSvg === 'function' ? trackSvg(l) : ''}
   ${rateable ? (l.rate ? `<div class="sm muted" style="margin-top:6px">La teva valoració: ${stars(l.rate)}</div>` : `<div class="sm muted" style="margin-top:6px">Valora aquesta classe: ${[1, 2, 3, 4, 5].map(i => `<button class="starbtn" data-act="rate" data-id="${l.id}" data-v="${i}" aria-label="${i} estrelles">★</button>`).join('')}</div>`) : (l.rate ? `<div class="sm muted" style="margin-top:6px">Valoració de l'alumne: ${stars(l.rate)}</div>` : '')}</div>`;
 }
 
@@ -647,6 +648,7 @@ function vInici() {
     <div class="card kpi"><div class="l">Teoria</div><div class="v">${theoryPct(me.id)}%</div><div class="s">${seenN(me.id)} de ${videosFor(me.id).length} vídeos vistos</div></div>
   </div>
   ${ex ? `<div class="exam"><div class="grow"><div class="sm" style="opacity:.7">${EX_L[ex.t]}</div><b class="ex-d">${fmtData(ex.d)} · ${ex.h}</b><div class="sm" style="opacity:.8">${esc(ex.pl)}</div></div><div style="text-align:right"><div class="ex-n">${days}</div><div class="sm" style="opacity:.7">${days === 1 ? 'dia' : 'dies'}</div></div></div>` : ''}
+  ${typeof offersCard === 'function' ? offersCard(me.id) : ''}
   <div style="margin-bottom:16px">${recCard(me.id)}</div>
   <div class="grid g-7-5">
     <div class="grid" style="align-content:start">
@@ -979,6 +981,7 @@ function profModal(id) {
 function vTramitsAdmin() {
   const cols = TR_KEYS;
   return `${head('Tràmits', 'Fes clic en una casella per canviar-ne l\'estat: pendent → en revisió → validat. Cada carnet té els seus tràmits.')}
+  ${typeof dgtTodo === 'function' ? dgtTodo() : ''}
   <div class="card flush scroll-x"><table><thead><tr><th>Alumne</th>${cols.map(k => `<th>${TRD[k].l.replace(/ \(.*\)/, '')}</th>`).join('')}</tr></thead><tbody>
   ${S.stu.map(s => { const mine = tramitsFor(s.id).map(x => x.k); return `<tr><td><b>${esc(s.n)}</b> ${pm(s.p)}</td>${cols.map(k => mine.includes(k) ? `<td><button class="cellbtn" data-act="tr-cycle" data-s="${s.id}" data-k="${k}" aria-label="${TRD[k].l} de ${esc(s.n)}">${trPill(k, trv(s.id, k))}</button></td>` : '<td class="muted">—</td>').join('')}</tr>`; }).join('')}</tbody></table></div>`;
 }
@@ -1004,7 +1007,7 @@ function vConfig() {
   <div class="card" style="margin-bottom:16px"><div class="card-h"><h2>Marca de l'autoescola</h2><span class="muted sm">Els alumnes i professors veuran el vostre nom i color</span></div>
   <div class="grid g2"><div><div class="field"><label for="bn">Nom de l'autoescola</label><input id="bn" data-act="brand-n" value="${esc(S.brand.name)}" maxlength="40"></div><label>Color principal</label><div class="swatches">${BRAND_COLORS.map(c => `<button class="swatch ${S.brand.c === c[1] ? 'on' : ''}" style="background:${c[1]}" data-act="brand-c" data-c="${c[1]}" aria-label="${c[0]}" title="${c[0]}"></button>`).join('')}</div><label class="chk-row" style="margin-top:14px"><input type="checkbox" data-act="brand-wl" ${wl() ? 'checked' : ''} style="width:auto;min-height:0"> Mostrar la meva marca en lloc de Vial</label></div>
   <div><label>Vista prèvia</label><div class="brand-prev">${wl() ? `<div class="logo wl" style="color:#fff">${logoHtml()}</div>` : `${LOGO}<div><b>Vial</b><div class="sm" style="color:#9aa6b2">${esc(S.brand.name)}</div></div>`}<span class="pill" style="margin-left:auto;background:var(--accent);color:#fff">Botó principal</span></div></div></div></div>
-  ${modsCard()}${payCard()}${cfgCard()}
+  ${modsCard()}${payCard()}${typeof offerCfgCard === 'function' ? offerCfgCard() : ''}${typeof smsCard === 'function' ? smsCard() + routesCard() : ''}${cfgCard()}
   <div class="card" style="margin-bottom:16px"><div class="card-h"><h2>Política de cancel·lacions</h2><span class="muted sm">Percentatge del preu de la classe que es cobra segons l'antelació</span></div><div class="grid g4">${S.policy.slice().sort((x, y) => y.h - x.h).map((x, i, arr) => `<div class="field"><label>${i === 0 ? x.h + ' h o més' : x.h === 0 ? 'Menys de ' + arr[i - 1].h + ' h' : x.h + '–' + arr[i - 1].h + ' h'}</label><div class="row"><input type="number" min="0" max="100" value="${x.pct}" data-act="pol" data-h="${x.h}" aria-label="Percentatge"><span class="muted">%</span></div></div>`).join('')}</div></div>
   <div class="chips">${PERMITS.map(p => `<button class="chip ${ui.cfgP === p.k ? 'on' : ''}" data-act="cfgp" data-k="${p.k}">${p.n}</button>`).join('')}</div>
   <div class="card flush scroll-x" style="margin-bottom:16px"><div class="card-h" style="padding:20px 24px 0"><h2>Packs del carnet ${P.n} · ${P.d}</h2><div class="row"><span class="muted sm">Preu hora: ${eur(P.h)}</span><button class="btn sm" data-act="newpack">${ic('plus')} Nou pack</button></div></div><table><thead><tr><th>Pack</th><th>Hores</th><th>Preu (€)</th><th>€/hora</th><th>Estalvi alumne</th><th>Visible</th><th></th></tr></thead><tbody>
@@ -1689,7 +1692,7 @@ document.addEventListener('click', e => {
     case 'reset': if (confirm('Restablir totes les dades de mostra?')) { localStorage.removeItem(KEY); location.reload(); } break;
     case 'go': closeModal(); ui.page = D.p; if (D.p === 'classes') ui.fake = 0; render(); window.scrollTo(0, 0); break;
     case 'login': try { sessionStorage.setItem('vial-in', '1'); if (window.APP_MODE) localStorage.setItem('vial-in', '1'); } catch {} S.role = D.r; ui.page = null; ui.instr = D.r === 'alumne' ? 'all' : D.r === 'prof' ? S.meI : S.instr[0].id; save(); render(); window.scrollTo(0, 0); break;
-    case 'logout': if (window.onLogout) onLogout(); try { sessionStorage.removeItem('vial-in'); localStorage.removeItem('vial-in'); } catch {} closeModal(); render(); window.scrollTo(0, 0); break;
+    case 'logout': if (window.onLogout) onLogout(); try { sessionStorage.removeItem('vial-in'); localStorage.removeItem('vial-in'); } catch {} if (window.SYNC) { location.reload(); break; } closeModal(); render(); window.scrollTo(0, 0); break;
     case 'role': S.role = D.r; ui.page = null; ui.instr = D.r === 'alumne' ? 'all' : D.r === 'prof' ? S.meI : S.instr[0].id; ui.thread = null; save(); render(); break;
     case 'enr': S.me = D.id; ui.instr = 'all'; ui.quiz = null; ui.vid = null; ui.picks = []; if (D.go) ui.page = D.go; save(); render(); break;
     case 'week': ui.weekOff = +D.n === 0 ? 0 : ui.weekOff + +D.n; render(); break;
@@ -1706,13 +1709,13 @@ document.addEventListener('click', e => {
       modal(`<h2>No puc assistir</h2><p><b>${fmtData(l.d)} · ${p2(l.h)}:00</b> · ${esc(ins(l.i).n)}</p>
       <div class="field" style="margin-top:12px"><label for="nr">Motiu</label><select id="nr">${ABS_R.map(x => `<option>${x}</option>`).join('')}</select></div>
       <div class="field"><label for="nn">Comentari (opcional)</label><textarea id="nn" rows="2" style="width:100%"></textarea></div>
-      <div class="notice ${ci.pct ? 'warn' : ''}">${ic('info')}<div>L'hora quedarà lliure i la pràctica tornarà al teu bo. L'autoescola revisarà l'avís i decidirà si s'aplica una penalització. Avisant ara, segons la política: <b>${ci.pct === 0 ? 'sense cost' : ci.lost ? 'es perdria la classe' : ci.pct + ' % · ' + eur(ci.fee)}</b>.</div></div>
+      <div class="notice ${ci.pct ? 'warn' : ''}">${ic('info')}<div>L'hora quedarà lliure${l.of ? '. Era una classe d\'oferta: no es retorna' : ' i la pràctica tornarà al teu bo'}. L'autoescola revisarà l'avís i decidirà si s'aplica una penalització. Avisant ara, segons la política: <b>${ci.pct === 0 ? 'sense cost' : ci.lost ? 'es perdria la classe' : ci.pct + ' % · ' + eur(ci.fee)}</b>.</div></div>
       <div class="acts"><button class="btn" data-act="close">Enrere</button><button class="btn bad" data-act="cancel" data-id="${l.id}">Confirmar que no puc assistir</button></div>`); break;
     }
     case 'mine-pt': { const l = L(); l.pt = $('#mp').value; say(me.id, `He canviat el punt de trobada del ${fmtData(l.d)} a les ${p2(l.h)}:00: ${l.pt}`, 'alumne', me.n); save(); closeModal(); render(); toast('Punt de trobada actualitzat i professor avisat'); break; }
     case 'cancel': {
       const l = L(), ci = cancelInfo(l), r = $('#nr') ? $('#nr').value : 'Altres', nt = $('#nn') ? $('#nn').value.trim() : '';
-      l.st = 'cancel·lada'; l.na = { r, note: nt, ts: Date.now(), hrs: ci.hrs, pct: ci.pct, st: 'pendent' }; me.bo++; notify([nkey.prof(l.i), 'adm'], `${me.n} no pot assistir`, `${fmtData(l.d)} a les ${p2(l.h)}:00 · ${r}`, { ic: 'info', go: 'today' });
+      l.st = 'cancel·lada'; l.na = { r, note: nt, ts: Date.now(), hrs: ci.hrs, pct: ci.pct, st: 'pendent' }; if (!l.of) me.bo++; notify([nkey.prof(l.i), 'adm'], `${me.n} no pot assistir`, `${fmtData(l.d)} a les ${p2(l.h)}:00 · ${r}`, { ic: 'info', go: 'today' });
       say(me.id, `No podrà assistir a la pràctica del ${fmtData(l.d)} a les ${p2(l.h)}:00 (${r}).`, 'alumne', me.n);
       notifyWait(l.d, l.h); save(); closeModal(); render();
       toast('Avís enviat. L\'hora queda lliure i la pràctica torna al teu bo'); break;
@@ -1734,19 +1737,20 @@ document.addEventListener('click', e => {
     case 'checkout': ui.co = { id: D.id, coupon: '', quotes: 1, method: 'Targeta' }; checkoutModal(); break;
     case 'coupon': ui.co.coupon = $('#cc').value.trim(); checkoutModal(); break;
     case 'co-ok': {
-      const { k, c, ref, credit, total: total0 } = coCalc(), q = k.t === 'carnet' ? +ui.co.quotes : 1, t = today0(), total = +(total0 * (1 + (q > 1 ? finFee(q) : 0) / 100)).toFixed(2), live = payLive(); let firstId = null;
+      const { k, c, ref, credit, total: total0 } = coCalc(), q = k.t === 'carnet' ? +ui.co.quotes : 1, t = today0(), total = +(total0 * (1 + (q > 1 ? finFee(q) : 0) / 100)).toFixed(2), live = payLive(), srv = !!window.SYNC; let firstId = null;
       let tgt = me; if (ui.co.newP) { tgt = { id: 's' + nid(), pid: me.pid, n: me.n, tel: me.tel, mail: me.mail, alta: iso(today0()), p: ui.co.newP, bo: 0, ref: me.ref }; S.stu.push(tgt); S.me = tgt.id; }
       if (c && !c.ref) c.usos++;
       if (ref) { me.refBy = ref.id; ref.credit = (ref.credit || 0) + 25; }
       me.credit = +((me.credit || 0) - credit).toFixed(2);
       for (let i = 1; i <= q; i++) {
         const am = i < q ? +(total / q).toFixed(2) : +(total - +(total / q).toFixed(2) * (q - 1)).toFixed(2);
-        const row = { id: nid(), s: tgt.id, c: q > 1 ? `${packTitle(k)} · quota ${i}/${q}` : packTitle(k), a: am, d: iso(addDays(t, (i - 1) * 30)), st: i === 1 && !live ? 'pagat' : 'pendent' };
-        if (live && i === 1) { row.bo = k.n; firstId = row.id; } S.pay.push(row);
+        const row = { id: nid(), s: tgt.id, c: q > 1 ? `${packTitle(k)} · quota ${i}/${q}` : packTitle(k), a: am, d: iso(addDays(t, (i - 1) * 30)), st: i === 1 && !srv ? 'pagat' : 'pendent' };
+        if (srv && i === 1) { row.bo = k.n; firstId = row.id; } S.pay.push(row);
       }
-      if (!live) tgt.bo += k.n; if (k.t === 'carnet') (S.tr[tgt.id] = S.tr[tgt.id] || {}).taxa = 'ok';
+      if (!srv) { tgt.bo += k.n; if (k.t === 'carnet') (S.tr[tgt.id] = S.tr[tgt.id] || {}).taxa = 'ok'; }
       const nw = ui.co.newP; if (nw) { ui.page = 'inici'; ui.co.newP = null; ui.picks = []; }
       if (live) { save(); closeModal(); return payStart([firstId]); }
+      if (srv) { save(); closeModal(); render(); toast('Rebut creat. Les pràctiques s\'afegiran quan el centre confirmi el pagament'); break; }
       save(); closeModal(); render(); toast(nw ? `Carnet ${PERM(tgt.p).n} afegit. Ja pots reservar les teves pràctiques` : k.t === 'carnet' ? `Carnet contractat. ${k.n} pràctiques afegides al bo` : `${k.n} pràctiques afegides al teu bo`); break;
     }
     case 'pay': payModal(P()); break;
@@ -1968,7 +1972,7 @@ function markSeen(id) {
 if (!window.DEFER_BOOT) render();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.addEventListener('storage', e => {
-  if (e.key !== KEY || !e.newValue) return;
+  if (window.SYNC || e.key !== KEY || !e.newValue) return; // amb servidor, cada compte rep les seves dades només del servidor
   try {
     const keep = { role: S.role, me: S.me, meI: S.meI }, ci = document.querySelector('#chat-in'), v = ci ? ci.value : null;
     S = JSON.parse(e.newValue); Object.assign(S, keep); S.mods = S.mods || {}; applyBrand(); render();

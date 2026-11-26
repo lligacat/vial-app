@@ -186,3 +186,7 @@ button.m-sm{width:100%;text-align:left;border:0;border-left:5px solid #c4cedb;fo
 .m-lg .mn{border:0;background:#12202f;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px}
 .m-kv{display:grid;grid-template-columns:96px 1fr;gap:8px 10px;margin:12px 0;font-size:13.5px}.m-kv span{color:#6b7686}
 .m-tb{width:100%;border-collapse:collapse;font-size:13.5px}.m-tb th{text-align:left;color:#6b7686;font-weight:600;font-size:12px;padding:4px 2px}.m-tb td{padding:8px 2px;border-top:1px solid #e3e9f1}.m-tb .r{text-align:right}
+
+.mob .of-row b{font-size:14px}.mob .of-row .m-btn{width:auto;flex:none}.mob .of-row small{color:#6b7686}
+
+.mob .trk{margin:10px auto 0;max-width:280px}.mob .trk svg{width:100%;background:#eef2f7;border-radius:14px}.mob .trk figcaption{font-size:12px;color:#6b7686;text-align:center;margin-top:4px}

@@ -48,7 +48,8 @@ const examLbl = k => EXAM_LBL[k] || k;
 const examParts = p => PARTS_BY_FAM[famOf(p)] || ['circ'];
 const examMin = (p, parts) => parts.reduce((a, k) => a + ((EXAM_PARTS[k].min[famOf(p)]) || 10), 0);
 const examSecs = (p, parts) => { const f = famOf(p), out = []; parts.forEach(k => EXAM_SEC[k](f).forEach(g => out.push(g))); return out; };
-const examRoutes = p => ROUTES[famOf(p)] || ROUTES.cotxe;
+// primer els itineraris que ha escrit el centre (Configuració)
+const examRoutes = p => (S.cfg.routes || []).filter(r => r.fam === famOf(p)).map(r => ({ id: 'c' + r.id, n: r.n, s: r.s })).concat(ROUTES[famOf(p)] || ROUTES.cotxe);
 const sevMix = f => { const t = simTot(f); return t; };
 
 // ---- estat d'una prova en curs

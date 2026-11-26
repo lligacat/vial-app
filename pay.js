@@ -1,7 +1,8 @@
 /* Vial · cobraments dins l'app (Stripe) i opcions de finançament del centre. */
 (function () {
   const CAND = [1, 2, 3, 4, 6, 10, 12], DEF = () => ({ online: 1, plans: CAND.map(n => ({ n, fee: 0, on: [1, 3, 6].includes(n) ? 1 : 0 })) });
-  const fin = () => { const c = S.cfg = S.cfg || {}; if (!c.fin) c.fin = DEF(); return c.fin; };
+  const fin = () => (S.cfg && S.cfg.fin) || DEF(); // llegir no modifica res: només la direcció desa la configuració
+  const finEdit = () => { const c = S.cfg = S.cfg || {}; return c.fin || (c.fin = DEF()); };
   window.finPlans = () => fin().plans.filter(p => p.on || p.n === 1).map(p => ({ n: p.n, fee: +p.fee || 0 }));
   window.finFee = q => { const p = fin().plans.find(x => x.n === +q); return p ? +p.fee || 0 : 0; };
   window.finText = () => { const a = finPlans().filter(p => p.n > 1); return a.length ? 'Es pot abonar en un sol pagament o fraccionat en ' + a.map(p => p.n).join(', ').replace(/, (\d+)$/, ' o $1') + ' quotes' + (a.every(p => !p.fee) ? ' sense interessos.' : '.') : 'Pagament en un sol rebut.'; };
@@ -36,9 +37,9 @@
   };
   document.addEventListener('change', e => {
     const el = e.target.closest('[data-act]'); if (!el) return; const a = el.dataset.act;
-    if (a === 'fin-online') { fin().online = el.checked ? 1 : 0; save(); render(); }
-    else if (a === 'fin-plan') { const p = fin().plans.find(x => x.n === +el.dataset.n); if (p) p.on = el.checked ? 1 : 0; save(); render(); }
-    else if (a === 'fin-fee') { const p = fin().plans.find(x => x.n === +el.dataset.n); if (p) p.fee = Math.max(0, Math.min(30, parseFloat(el.value) || 0)); save(); render(); }
+    if (a === 'fin-online') { finEdit().online = el.checked ? 1 : 0; save(); render(); }
+    else if (a === 'fin-plan') { const p = finEdit().plans.find(x => x.n === +el.dataset.n); if (p) p.on = el.checked ? 1 : 0; save(); render(); }
+    else if (a === 'fin-fee') { const p = finEdit().plans.find(x => x.n === +el.dataset.n); if (p) p.fee = Math.max(0, Math.min(30, parseFloat(el.value) || 0)); save(); render(); }
   });
 
   // retorn des de la pàgina de pagament

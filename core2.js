@@ -67,6 +67,7 @@ const AUTO_RULES = [
   ['timer', 'Fi de l\'hora de classe', 'Avisa alumne i professor quan s\'ha acabat el temps de la classe.'],
 ];
 function autoRun() {
+  if (window.SYNC && S.role !== 'admin') return 0; // amb servidor, les automatitzacions les genera la sessió de direcció
   const A = S.auto; let fired = 0;
   const once = (key, rule, text, fn) => { if (S.nk[key]) return; S.nk[key] = Date.now(); fn(); S.alog.unshift({ ts: Date.now(), r: rule, t: text }); fired++; };
   S.les.filter(l => l.s && l.st === 'reservada' && stu(l.s)).forEach(l => {

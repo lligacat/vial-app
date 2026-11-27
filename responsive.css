@@ -1,0 +1,138 @@
+/* Vial · adaptació a mides de pantalla i dispositius (panell i app). Es carrega l'última. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,summary,a,[data-act],[data-m]{-webkit-tap-highlight-color:transparent}
+button,summary,a,[role=button]{touch-action:manipulation}
+.mob button:active:not(:disabled){transform:none} /* l'enfonsament el fa press.js */
+
+.shell .grid>*{min-width:0}
+.page-h .row{flex-wrap:wrap}
+.shell .card>.row{flex-wrap:wrap}
+.shell .card>.row>.grow{min-width:140px}
+.shell .row.wrap>.grow:has(>.btn){flex:1 0 auto}
+.shell .item .grow,.modal .item .grow{overflow-wrap:anywhere}
+.shell .chk-row .sw{flex:none}
+.login .lg-l h2{max-width:none}
+@media(min-width:901px) and (max-width:1280px){.login .lg-l h2{font-size:clamp(22px,2.4vw,30px)}.lg-spec{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr)}.lg-spec div{padding-left:10px;padding-right:4px}.lg-spec dt{letter-spacing:.1em}.lg-spec dd{font-size:12px}}
+.login .lg-l .logo{order:-1}
+@media(min-width:901px){.side{height:100vh;height:100dvh}}
+@media(min-width:901px) and (max-width:1180px){.toolbar .crumb{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+/* ---------- pantalles tàctils: botons més grans i sense zoom en escriure (iPhone) ---------- */
+@media(pointer:coarse){
+  .btn.sm,.shell .btn.sm{min-height:38px}
+  .seg button,.toolbar .seg button{min-height:34px}
+  .shell .cellbtn,.shell .mcell{min-height:36px;min-width:40px}
+  .starbtn{min-width:36px;min-height:36px}
+  .mob .m-link{min-height:36px}
+  .mob .m-x{width:36px;height:36px}
+  .login .lg-back{display:inline-block;padding:10px 0}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}
+}
+
+/* ---------- panell en pantalles estretes ---------- */
+@media(max-width:900px){
+  .login{grid-template-rows:auto 1fr;align-content:start}
+  .login .lg-l{min-height:0;gap:18px;padding:max(22px,env(safe-area-inset-top)) 24px 26px}
+  .login .lg-l small{display:none}
+  .side{height:auto;padding-top:env(safe-area-inset-top)}
+  .toolbar{position:static;height:auto;min-height:0;row-gap:8px}
+  .tb-r{gap:8px;row-gap:8px}
+  .shell .status{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+}
+
+/* ---------- mòbil ---------- */
+@media(max-width:700px){
+  .shell .main{padding:18px 12px 64px}
+  .shell .card:not(.flush){padding:16px}
+  .shell .grid.g4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .shell .grid.g3,.shell .grid.g2{grid-template-columns:minmax(0,1fr)}
+  .shell .kpi{padding:14px}
+  .shell .kpi .v{font-size:clamp(19px,5.8vw,28px);overflow-wrap:anywhere}
+  .shell .item{flex-wrap:wrap}
+  .shell .item>.grow{flex:1 1 150px}
+  .shell .item>.row{margin-left:auto}
+  .shell .page-h>.row{width:100%}
+  .shell .page-h>.row>.btn{flex:1 1 auto;justify-content:center}
+  .shell .hmap{min-width:0;grid-template-columns:38px repeat(6,minmax(0,1fr));gap:2px}
+  .shell .hm{font-size:10px}
+  .shell .hmh{font-size:10px;min-width:0;overflow:hidden}
+  .ov{padding:10px}
+  .modal{padding:20px 16px;max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px)}
+  .modal .row{flex-wrap:wrap}
+  .modal .acts{flex-wrap:wrap}
+  .modal .acts .btn{flex:1 1 130px;justify-content:center}
+
+  /* taules en targetes: una fila per targeta, amb el nom de cada columna */
+  table.stack,table.stack tbody{display:block;width:100%!important;min-width:0!important}
+  table.stack thead{display:none}
+  table.stack tr{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid var(--pl,#dde1e7)}
+  table.stack tr:last-child{border-bottom:0}
+  .card:not(.flush) table.stack tr,.modal table.stack tr{padding-left:0;padding-right:0}
+  table.stack td{display:grid;grid-template-columns:minmax(0,36%) minmax(0,1fr);gap:12px;align-items:center;width:auto!important;min-width:0!important;padding:5px 0!important;border:0!important;text-align:left!important;white-space:normal!important}
+  table.stack td::before{content:attr(data-label);font-size:12px;line-height:1.35;color:var(--muted,#667380);font-weight:400}
+  table.stack td.td-main,table.stack td.td-full{grid-template-columns:minmax(0,1fr)}
+  table.stack td.td-main{order:-1;padding-bottom:8px!important}
+  table.stack td.td-main::before,table.stack td.td-full::before{display:none}
+  table.stack td.td-none{display:none}
+  table.stack td .cv{min-width:0;overflow-wrap:anywhere}
+  table.stack td.td-main .cv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+  table.stack td.td-full .cv{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  table.stack td .cv .btn{white-space:normal}
+  table.stack td .cv input[type=number]{max-width:140px}
+  /* taules sense capçalera: títol a dalt i la resta en línia */
+  table.stack.plain tr{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+  table.stack.plain td{display:block;padding:0!important}
+  table.stack.plain td.td-main{flex:0 0 100%;padding:0!important}
+  table.stack.plain td:last-child:not(.td-main){margin-left:auto}
+}
+@media(max-width:520px){
+  .shell .grid:has(>.chk-row){grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:420px){
+  .shell .grid:has(>.pack){grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:480px){.login .lg-l h2{font-size:clamp(19px,5.6vw,25px)}}
+
+/* ---------- mòbil apaïsat ---------- */
+@media(min-width:600px) and (max-height:540px){
+  .login{grid-template-columns:minmax(0,5fr) minmax(0,6fr);grid-template-rows:none;align-content:stretch}
+  .login .lg-spec,.login .lg-l small{display:none}
+  .login .lg-l{padding:20px 24px;justify-content:center}
+  .login .lg-l h2{font-size:22px}
+  .login .lg-r{padding-top:20px;padding-bottom:20px}
+}
+
+/* ---------- app: el marc de telèfon només amb ratolí i pantalla prou alta ---------- */
+@media(min-width:721px) and (pointer:coarse),(min-width:721px) and (max-height:620px){
+  body.appmode{display:block;place-items:normal;background:#f1f2f4;min-height:0}
+  body.appmode #app{width:100%}
+  .mob{width:100%;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}
+  .m-body{padding-left:max(16px,calc(50% - 320px));padding-right:max(16px,calc(50% - 320px))}
+  .m-tabs{justify-content:center}
+  .m-tabs button{max-width:132px}
+  .m-ov{justify-content:center}
+  .m-sheet{max-width:640px}
+  .mlog{overflow-y:auto}
+  .mlog-top,.mlog-bot{width:100%;max-width:520px;margin-left:auto;margin-right:auto}
+}
+@media(max-height:500px){
+  .mob .m-body{padding-top:10px}
+  .mob .m-tabs{padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom))}
+  .mob .m-tabs button{padding:3px 0;gap:1px}
+  .mob .m-tabs button .ico{width:20px;height:20px}
+  .mob.mlog,.mlog{overflow-y:auto}
+  .mlog-top{flex:none;padding-top:20px}
+  .mlog .mlog-logo{width:52px;height:52px;font-size:18px;margin-bottom:12px}
+  .m-sheet{max-height:96%}
+}
+.mob .m-body{padding-top:max(18px,env(safe-area-inset-top))}
+
+/* ---------- pantalles molt grans ---------- */
+@media(min-width:2200px) and (min-height:1100px){
+  :root{--sw:300px}
+  .shell .main{zoom:1.25;width:100%;max-width:1840px;margin-left:auto;margin-right:auto}
+  .snav button{font-size:16px;padding:11px 16px}
+  .toolbar{zoom:1.2}
+  .login .lg-l>*,.login .lg-r>*{zoom:1.3}
+  .modal{zoom:1.2;max-height:74vh}
+}

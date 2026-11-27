@@ -551,7 +551,7 @@ const LOGGED = () => { try { return sessionStorage.getItem('vial-in') === '1' ||
 function renderLogin() {
   const P = [['alumne', 'Alumne', 'Laia Roca', 'Reserves, temari, pagaments i exàmens'], ['prof', 'Professor', 'Jordi Puig', 'Agenda, registre de classes i alumnes'], ['admin', 'Autoescola', 'Anna Bosch', 'Gestió completa del centre']];
   $('#app').innerHTML = `<div class="login">
-    <section class="lg-l"><div class="logo ${wl() ? 'wl' : ''}">${logoHtml()}</div><div><h2>Gestió integral d'autoescoles</h2><p>Reserves, seguiment del temari, tràmits, pagaments i exàmens en un únic espai de treball.</p></div><small>Entorn de demostració amb dades de mostra</small></section>
+    <section class="lg-l"><div class="logo ${wl() ? 'wl' : ''}">${logoHtml()}</div><div><h2>Gestió integral d'autoescoles</h2><p>Reserves, seguiment del temari, tràmits, pagaments i exàmens en un únic espai de treball.</p><dl class="lg-spec"><div><dt>Perfils</dt><dd>Direcció, professorat, alumnat</dd></div><div><dt>Permisos</dt><dd>De l'AM<br>al D</dd></div><div><dt>Accés</dt><dd>Ordinador<br>i mòbil</dd></div></dl></div><small>Entorn de demostració amb dades de mostra</small></section>
     <section class="lg-r"><div class="lg-box"><h1>Accés al compte</h1><p class="muted">Tria el perfil amb el qual vols entrar a l'entorn de demostració. No cal cap contrasenya.</p>
     <div class="lg-list">${P.map(p => `<button data-act="login" data-r="${p[0]}"><span class="avatar">${ini(p[2])}</span><span class="lg-t"><b>${p[1]}</b><small>${p[2]} · ${p[3]}</small></span>${ic('right')}</button>`).join('')}</div>
     <button class="btn lg-app" data-act="appmode">Obrir en mode app (mòbil)</button>
@@ -1504,7 +1504,7 @@ function absCsv() {
 }
 function preCsv() {
   syncPre();
-  return [['Data', 'Nom', 'Telèfon', 'Correu', 'Carnet', 'Franja', 'Comentari', 'Estat'], ...S.pre.map(x => [new Date(x.ts).toISOString().slice(0, 10), x.n, x.tel, x.mail, PERM(x.p).n, x.fr, x.nota, x.st])];
+  return [['Data', 'Nom', 'Telèfon', 'Correu', 'Data de naixement', 'Tutor', 'Telèfon del tutor', 'Carnet', 'Franja', 'Quotes', 'Comentari', 'Estat'], ...S.pre.map(x => [new Date(x.ts).toISOString().slice(0, 10), x.n, x.tel, x.mail, x.naix || '', x.tutor || '', x.tutorTel || '', PERM(x.p).n, x.fr, x.q || '', x.nota, x.st])];
 }
 
 // ---------- ASSISTÈNCIA (xat intern) ----------
@@ -1584,9 +1584,16 @@ function vTarifes() {
 function syncPre() {
   try {
     const raw = JSON.parse(localStorage.getItem('vial-preinscripcions') || '[]');
-    if (raw.length) { raw.forEach(x => { if (!S.pre.some(y => y.id === x.id)) S.pre.unshift(x); }); localStorage.removeItem('vial-preinscripcions'); save(); }
+    if (raw.length) {
+      raw.forEach(x => { if (S.pre.some(y => y.id === x.id)) return; S.pre.unshift(x); notify('adm', 'Nova preinscripció', `${x.n} · carnet ${PERM(x.p).n}`, { ic: 'users', go: 'preinscripcions' }); });
+      localStorage.removeItem('vial-preinscripcions'); save();
+    }
   } catch { }
 }
+// una inscripció feta en una altra pestanya apareix sense recarregar
+addEventListener('storage', e => { if (e.key === 'vial-preinscripcions' && e.newValue && LOGGED() && isAdmin()) render(); });
+const ageFrom = d => { const b = new Date(d + 'T00:00'), n = new Date(); return n.getFullYear() - b.getFullYear() - (n < new Date(n.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0); };
+const preExtra = x => [x.naix ? `${ageFrom(x.naix)} anys` : '', x.q ? (x.q > 1 ? x.q + ' quotes' : 'pagament únic') : ''].filter(Boolean).join(' · ');
 const preStatePill = st => ({ nova: '<span class="pill info">Nova</span>', contactada: '<span class="pill warn">Contactada</span>', matriculada: '<span class="pill ok">Matriculada</span>', descartada: '<span class="pill mute">Descartada</span>' }[st] || '');
 function vPre() {
   syncPre();
@@ -1594,7 +1601,7 @@ function vPre() {
   return `${head('Preinscripcions', 'Persones que s\'han apuntat des del formulari en línia.', `<div class="row"><a class="btn" href="inscripcio.html" target="_blank" rel="noopener">Veure el formulari públic</a><button class="btn" data-act="csv" data-k="pre">${ic('down')} Exportar CSV</button></div>`)}
   <div class="chips">${[['actives', 'Per gestionar'], ['matriculada', 'Matriculades'], ['descartada', 'Descartades'], ['tots', 'Totes']].map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-act="pref" data-k="${k}">${l} <b>${k === 'tots' ? all.length : k === 'actives' ? all.filter(x => ['nova', 'contactada'].includes(x.st)).length : all.filter(x => x.st === k).length}</b></button>`).join('')}</div>
   <div class="card flush scroll-x"><table><thead><tr><th>Data</th><th>Persona</th><th>Carnet</th><th>Franja</th><th>Comentari</th><th>Estat</th><th></th></tr></thead><tbody>
-  ${list.map(x => `<tr><td>${tfmt(x.ts)}</td><td><b>${esc(x.n)}</b><div class="sm muted">${esc(x.tel)} · ${esc(x.mail)}</div></td><td>${pm(x.p)}</td><td>${esc(x.fr || '—')}</td><td class="sm">${esc(x.nota || '—')}</td><td>${preStatePill(x.st)}</td><td class="right" style="white-space:nowrap">${['nova', 'contactada'].includes(x.st) ? `${x.st === 'nova' ? `<button class="btn sm" data-act="pre-set" data-id="${x.id}" data-v="contactada">Contactada</button> ` : ''}<button class="btn sm pri" data-act="pre-set" data-id="${x.id}" data-v="matriculada">Matricular</button> <button class="btn sm" data-act="pre-set" data-id="${x.id}" data-v="descartada">Descartar</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">No hi ha preinscripcions en aquest estat.</td></tr>'}</tbody></table></div>`;
+  ${list.map(x => `<tr><td>${tfmt(x.ts)}</td><td><b>${esc(x.n)}</b><div class="sm muted">${esc(x.tel)} · ${esc(x.mail)}</div>${preExtra(x) ? `<div class="sm muted">${esc(preExtra(x))}</div>` : ''}${x.tutor ? `<div class="sm muted">Tutor: ${esc(x.tutor)} · ${esc(x.tutorTel || '')}</div>` : ''}</td><td>${pm(x.p)}</td><td>${esc(x.fr || '—')}</td><td class="sm">${esc(x.nota || '—')}</td><td>${preStatePill(x.st)}</td><td class="right" style="white-space:nowrap">${['nova', 'contactada'].includes(x.st) ? `${x.st === 'nova' ? `<button class="btn sm" data-act="pre-set" data-id="${x.id}" data-v="contactada">Contactada</button> ` : ''}<button class="btn sm pri" data-act="pre-set" data-id="${x.id}" data-v="matriculada">Matricular</button> <button class="btn sm" data-act="pre-set" data-id="${x.id}" data-v="descartada">Descartar</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">No hi ha preinscripcions en aquest estat.</td></tr>'}</tbody></table></div>`;
 }
 
 // ---------- DISPONIBILITAT ----------
@@ -1843,7 +1850,12 @@ document.addEventListener('click', e => {
     case 'pref': ui.preF = D.k; render(); break;
     case 'pre-set': {
       const x = S.pre.find(y => y.id === D.id); x.st = D.v;
-      if (D.v === 'matriculada') { const id = 's' + nid(); S.stu.push({ id, pid: 'P' + id, n: x.n, p: x.p, tel: x.tel, mail: x.mail, alta: iso(today0()), bo: 0, ref: x.n.split(' ')[0].toUpperCase().normalize('NFD').replace(/[^A-Z]/g, '') + '25' }); x.sid = id; }
+      if (D.v === 'matriculada') {
+        // si ja és alumne del centre (mateix correu i nom), el carnet nou s'afegeix al seu perfil
+        const same = a => String(a || '').trim().toLowerCase(), mine = S.stu.filter(s => same(s.mail) === same(x.mail) && same(s.n) === same(x.n)), cur = mine.find(s => s.p === x.p);
+        if (cur) x.sid = cur.id;
+        else { const id = 's' + nid(), o = mine[0]; S.stu.push({ id, pid: o ? o.pid : 'P' + id, n: x.n, p: x.p, tel: x.tel, mail: x.mail, alta: iso(today0()), bo: 0, ref: o ? o.ref : x.n.split(' ')[0].toUpperCase().normalize('NFD').replace(/[^A-Z]/g, '') + '25', ...(x.naix ? { naix: x.naix } : {}), ...(x.tutor ? { tutor: x.tutor, tutorTel: x.tutorTel } : {}) }); x.sid = id; }
+      }
       save(); render(); toast(D.v === 'matriculada' ? x.n + ' ja és alumne del centre' : D.v === 'contactada' ? 'Marcada com a contactada' : 'Preinscripció descartada'); break;
     }
     case 'dispp': ui.dispP = D.k; render(); break;

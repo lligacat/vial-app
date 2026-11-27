@@ -1,0 +1,116 @@
+/* Vial · capa d'estil. Es carrega l'última: negre profund, titulars amples en majúscules,
+   botons en píndola i caixes netes. El color d'acció continua sent el de cada centre (--accent). */
+:root{
+  --black:#05070a;
+  --wide:'Archivo','Inter Tight',system-ui,sans-serif;
+  --head:'Archivo','Inter Tight',system-ui,sans-serif;
+  --side:#05070a;--side-2:#151a22;--side-line:#1b212b;--side-t:#9aa4b2;--ws:#f1f2f4;--pl:#e2e5e9;--r:10px;
+}
+
+/* ---------- titulars ---------- */
+h1,.lg-l h2,.mlog h1,.m-hd h1{font-family:var(--wide);font-stretch:118%;text-transform:uppercase}
+.kpi .v,.m-row2s b,.m-tot b,.m-ringw b,.tm-t,.rec-n{font-family:var(--wide);font-stretch:112%}
+.sgroup,.m-lab,.m-sec{font-family:var(--wide);font-stretch:120%;letter-spacing:.12em;font-size:10px}
+
+/* ---------- accés (ordinador) ---------- */
+.login{background:var(--black);color:#fff}
+.lg-l{position:relative;background:#0a0d12;border-right:1px solid #1b212b;padding:48px clamp(32px,4vw,64px)}
+.lg-l h2{font-size:clamp(30px,3.4vw,52px);font-weight:600;letter-spacing:.005em;line-height:1.06;max-width:13ch}
+.lg-l p{color:#a8b1bf;font-size:16px}
+.lg-spec{display:grid;grid-template-columns:repeat(3,1fr);margin-top:48px;border-top:1px solid #232a35}
+.lg-spec div{padding:20px 14px 0;border-left:1px solid #232a35}
+.lg-spec div:first-child{border-left:0;padding-left:0}
+.lg-spec dt{font:600 10px var(--wide);font-stretch:120%;letter-spacing:.16em;text-transform:uppercase;color:#7c8697;margin-bottom:8px}
+.lg-spec dd{margin:0;font:500 15px var(--wide);font-stretch:112%;text-transform:uppercase;line-height:1.35}
+.lg-l small{color:#6b7587}
+.lg-r{background:var(--black)}
+.lg-box h1{color:#fff;font-size:26px;font-weight:600}
+.lg-box .muted{color:#9aa4b2}
+.lg-list{gap:10px}
+.lg-list button{background:#0f131a;border:1px solid #1f2631;border-radius:10px;color:#fff;padding:16px 18px;transition:border-color .2s,background .2s,transform .2s}
+.lg-list button:hover{border-color:#fff;background:#151a23;transform:translateX(3px)}
+.lg-list .avatar{background:#fff;color:#05070a;border-radius:50%;font-weight:600}
+.lg-list .lg-t small{color:#8f99a8}
+.login .lg-app{background:transparent;color:#fff;border:1px solid #3a4351;border-radius:999px;min-height:46px}
+.login .lg-app:hover{background:#fff;color:#05070a;border-color:#fff}
+.login .lg-back{color:#8f99a8}
+
+/* ---------- entorn d'escriptori ---------- */
+.side .logo{height:60px}
+.snav{padding:4px 12px 16px;gap:2px}
+.snav button{border-radius:999px;padding:8px 14px;transition:background .18s,color .18s}
+.snav button:hover{background:var(--side-2)}
+.snav button.on{background:#fff;color:#05070a;font-weight:600}
+.snav button.on::before{display:none}
+.snav button.on .badge{background:var(--accent);color:#fff}
+.snav .badge{border-radius:999px}
+.sgroup{padding:20px 14px 8px;color:#5f6979}
+.side-org{padding-left:26px}
+.side-foot .avatar{border-radius:50%;background:#fff;color:#05070a}
+.toolbar{height:60px}
+.toolbar .bell{border-radius:50%}
+.toolbar .seg{border-radius:999px;padding:3px}
+.toolbar .seg button{border-radius:999px}
+.crumb b{font-family:var(--wide);font-stretch:118%;text-transform:uppercase;font-size:11.5px;letter-spacing:.08em}
+.shell .main{padding:28px 32px 80px}
+.shell h1{font-size:25px;font-weight:600;letter-spacing:.01em}
+.shell h2{font-size:14.5px;font-weight:600}
+.shell .page-h{margin-bottom:22px}
+.shell .card{border-radius:10px;padding:18px 20px}
+.shell .card.flush{padding:0}
+.shell .kpi{padding:18px 20px}
+.shell .kpi .l{font-size:12.5px}
+.shell .kpi .v{font-size:30px;font-weight:500;letter-spacing:0;margin-top:8px}
+.btn,.shell .btn,.shell .btn.sm{border-radius:999px}
+.shell .btn{min-height:34px;padding:6px 16px}
+.shell .btn.sm{min-height:28px;padding:3px 12px}
+.shell .btn.pri:hover{filter:brightness(.93)}
+.mcell{border-radius:5px}
+.modal{border-radius:14px}
+.modal h2{font-family:var(--wide);font-stretch:112%;font-weight:600;font-size:19px}
+.pill{border-radius:999px}
+
+/* ---------- app mòbil ---------- */
+body.appmode{background:var(--black)}
+@media(min-width:721px){body.appmode{background:var(--black)}.mob{border:1px solid #262d38}}
+.mob{--r:18px;background:#f1f2f4;color:#0b0f15}
+.m-hd h1{font-size:23px;font-weight:600;letter-spacing:.005em;line-height:1.12;margin-top:4px}
+.m-card{box-shadow:none;border:1px solid #e4e7eb}
+.m-card h2{font-size:19px;font-weight:600}
+.m-btn,.m-btn.sm,.mob .btn{border-radius:999px;font-weight:600}
+.mob .pill{border-radius:999px}
+.m-chip,.m-pill{border-radius:999px}
+.m-ib,.m-back{box-shadow:none;border:1px solid #e1e4e9}
+.m-avt{border:0;background:#05070a;color:#fff}
+.m-ob,.m-cl,.m-st,.m-nt,.m-qa,.m-menu button,.m-ag{box-shadow:none}
+.m-ob,.m-cl,.m-st,.m-nt,.m-qa,.m-menu button,.m-ag.cls,.m-ag.blk{border:1px solid #e4e7eb}
+.m-ag.cls{border-left:5px solid var(--accent)}
+.m-seg,.m-seg button{border-radius:999px}
+
+/* targeta principal en negre */
+.mob .m-card.m-prog,.mob .m-card.m-nx{background:#05070a;border-color:#05070a;color:#fff}
+.mob .m-card.m-prog .m-lab,.mob .m-card.m-prog .m-sub,.mob .m-card.m-nx small{color:#98a2b1}
+.mob .m-card.m-prog h2,.mob .m-card.m-prog .m-ringw b,.mob .m-card.m-nx h2{color:#fff}
+.mob .m-card.m-prog .m-ringw circle:first-of-type{stroke:#222a36}
+.mob .m-card.m-nx .m-btn{background:#fff;color:#05070a}
+
+/* barra inferior */
+.m-tabs{background:#05070a;border-top:0;padding:8px 8px calc(10px + env(safe-area-inset-bottom));gap:2px}
+.m-tabs button{color:#7f8a9a;border-radius:16px}
+.m-tabs button.on{color:#05070a;background:#fff}
+
+/* accés al mòbil */
+.mlog{background:var(--black)}
+.mlog-top{padding-top:64px}
+.mlog h1{font-size:29px;font-weight:600;letter-spacing:.005em;line-height:1.1}
+.mlog-logo{background:var(--accent);color:#fff;border-radius:50%;width:72px;height:72px;font-size:24px}
+.mlog p{opacity:1;color:#a8b1bf}
+.m-pro{background:#0f131a;border:1px solid #1f2631;border-radius:18px}
+.m-pro .m-av{background:#fff;color:#05070a}
+
+@media(max-width:860px){
+  .shell h1{font-size:21px}
+  .shell .main{padding:20px 16px 72px}
+  .lg-l h2{font-size:27px}
+  .lg-spec{display:none}
+}
